@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    if command -v gtk-update-icon-cache >/dev/null; then
+        gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
+    fi
+    echo "------------------------------------------------"
+    echo "Bender installed. Launch it from the app grid,"
+    echo "or run 'bender' from a terminal."
+    echo "------------------------------------------------"
+fi
+
+#DEBHELPER#

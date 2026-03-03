@@ -1,0 +1,9 @@
+bender (0.1.0-1) unstable; urgency=medium
+
+  * Initial release — Linux workstation dashboard with 6 tabs:
+    System Overview, Security Audit, Network Monitor,
+    Maintenance, Weather, and Proxy Manager.
+  * GTK4 + libadwaita interface.
+  * Wraps 69 bash scripts into a polished GNOME-native GUI.
+
+ -- Chuck Talk <cwtalk1@gmail.com>  Mon, 02 Mar 2026 17:09:00 -0600

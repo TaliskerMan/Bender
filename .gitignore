@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.pybuild/
+.venv/
+venv/
+.env
+
+# Build artifacts (keep directory, ignore package files)
+artifacts/*.deb
+artifacts/*.changes
+artifacts/*.buildinfo
+artifacts/*.dsc
+artifacts/*.tar.*
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temp
+*.log
+*.tmp

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bender"
+version = "0.1.0"
+description = "Linux workstation dashboard — Bite my shiny metal app!"
+readme = "README.md"
+authors = [
+  { name="Chuck Talk", email="cwtalk1@gmail.com" },
+]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: GTK",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "PyGObject",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+bender = "bender.main:main"

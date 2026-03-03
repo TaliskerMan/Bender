@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    if command -v gtk-update-icon-cache >/dev/null; then
+        gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
+    fi
+    echo "------------------------------------------------"
+    echo "Bender installed. Launch it from the app grid,"
+    echo "or run 'bender' from a terminal."
+    echo "------------------------------------------------"
+fi
+
+
+# Automatically added by dh_python3
+if command -v py3compile >/dev/null 2>&1; then
+	py3compile -p bender 
+fi
+if command -v pypy3compile >/dev/null 2>&1; then
+	pypy3compile -p bender  || true
+fi
+
+# End automatically added section
+
