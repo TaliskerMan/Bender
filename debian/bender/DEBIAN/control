@@ -1,8 +1,8 @@
 Package: bender
-Version: 0.1.0-1
+Version: 0.1.1-1
 Architecture: all
-Maintainer: Chuck Talk <cwtalk1@gmail.com>
-Installed-Size: 445
+Maintainer: Chuck Talk <chuck@nordheim.online>
+Installed-Size: 447
 Depends: python3-gi, python3:any, gir1.2-gtk-4.0, gir1.2-adw-1, hicolor-icon-theme, policykit-1
 Section: utils
 Priority: optional

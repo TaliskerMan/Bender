@@ -1,10 +1,13 @@
 # Bender — Linux Workstation Dashboard
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # Licensed under GPLv3 or later
 
 import sys
 import signal
 import gi
+import logging
+import os
+from pathlib import Path
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -47,7 +50,22 @@ class BenderApp(Adw.Application):
         Adw.Application.do_shutdown(self)
 
 
+def setup_logging():
+    log_dir = Path.home() / ".local" / "state" / "bender"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "bender.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    logging.info("Bender initialized")
+
 def main():
+    setup_logging()
     app = BenderApp()
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, app.quit)
     return app.run(sys.argv)

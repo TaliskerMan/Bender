@@ -1,3 +1,12 @@
+bender (0.1.1-1) unstable; urgency=medium
+
+  * Security updates: fixed command injections in network and proxy tabs.
+  * Replaced subprocess shell=True usages with safe execution.
+  * Implemented application logging.
+  * Updated author email and incremented release version.
+
+ -- Chuck Talk <chuck@nordheim.online>  Fri, 27 Mar 2026 10:50:00 -0500
+
 bender (0.1.0-1) unstable; urgency=medium
 
   * Initial release — Linux workstation dashboard with 6 tabs:
@@ -6,4 +15,4 @@ bender (0.1.0-1) unstable; urgency=medium
   * GTK4 + libadwaita interface.
   * Wraps 69 bash scripts into a polished GNOME-native GUI.
 
- -- Chuck Talk <cwtalk1@gmail.com>  Mon, 02 Mar 2026 17:09:00 -0600
+ -- Chuck Talk <chuck@nordheim.online>  Mon, 02 Mar 2026 17:09:00 -0600

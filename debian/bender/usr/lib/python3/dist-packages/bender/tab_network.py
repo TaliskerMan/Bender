@@ -6,6 +6,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw
 from .runner import CommandRunner
+import shlex
 
 
 def _tool_row(label: str, placeholder: str, btn_label: str, on_clicked) -> tuple:
@@ -168,7 +169,7 @@ class NetworkTab(Gtk.Box):
             return
         self._dns_buf.set_text(f"Looking up {domain}…")
         CommandRunner.run_shell(
-            f"dig {domain}",
+            f"dig {shlex.quote(domain)}",
             lambda o, e, r: self._dns_buf.set_text(o or e or "dig not found")
         )
 
@@ -179,7 +180,7 @@ class NetworkTab(Gtk.Box):
             return
         self._whois_buf.set_text(f"Running whois on {domain}…")
         CommandRunner.run_shell(
-            f"whois {domain} 2>&1 | head -60",
+            f"whois {shlex.quote(domain)} 2>&1 | head -60",
             lambda o, e, r: self._whois_buf.set_text(o or e or "whois not found")
         )
 

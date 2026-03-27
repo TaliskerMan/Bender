@@ -4,6 +4,8 @@
 import threading
 import subprocess
 import shutil
+import shlex
+import re
 
 import gi
 gi.require_version('Gtk', '4.0')
@@ -205,9 +207,14 @@ class ProxyTab(Gtk.Box):
         domain = self._quick_entry.get_text().strip()
         if not domain:
             return
+
+        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+            self._action_status.set_text("Invalid domain format.")
+            return
+
         self._action_status.set_text(f"Adding {domain} to blocklist…")
         CommandRunner.run_shell(
-            f"echo '{domain}' >> {FILTER_FILE} && systemctl restart tinyproxy",
+            f"echo {shlex.quote(domain)} >> {FILTER_FILE} && systemctl restart tinyproxy",
             lambda o, e, r: (
                 self._action_status.set_text(f"Added {domain}." if r == 0 else f"Error: {e}"),
                 self._load_blocklist()

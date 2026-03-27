@@ -25,8 +25,8 @@ class CommandRunner:
             if isinstance(cmd, list):
                 cmd = ['pkexec'] + cmd
             else:
-                cmd = f'pkexec bash -c "{cmd}"'
-                shell = True
+                cmd = ['pkexec', 'bash', '-c', cmd]
+                shell = False
 
         def _worker():
             try:
