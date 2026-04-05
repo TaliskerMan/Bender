@@ -4,7 +4,7 @@ set -e
 
 # Configuration
 PACKAGE_NAME="bender"
-VERSION=$(grep -oP '(?<=^bender \().*?(?=\))' debian/changelog)
+VERSION=$(head -1 debian/changelog | grep -oP '(?<=^bender \().*?(?=\))')
 GPG_EMAIL="chuck@nordheim.online"
 BUILD_DIR="artifacts"
 

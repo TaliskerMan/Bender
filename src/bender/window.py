@@ -5,13 +5,12 @@
 import importlib.metadata
 import os
 import gi
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw, Gio, GLib
+from gi.repository import Gtk, Adw, Gio, GLib, Gdk
 
 from .tab_system import SystemTab
 from .tab_security import SecurityTab
 from .tab_network import NetworkTab
+from .tab_connections import ActiveConnectionsTab
 from .tab_maintenance import MaintenanceTab
 from .tab_weather import WeatherTab
 from .tab_proxy import ProxyTab
@@ -23,17 +22,40 @@ class BenderWindow(Adw.ApplicationWindow):
         self.set_default_size(960, 700)
 
         # ── Root layout ──────────────────────────────────────────────────────
-        root_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_content(root_box)
+        self.overlay = Gtk.Overlay()
+        self.set_content(self.overlay)
+
+        main_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.overlay.set_child(main_hbox)
+
+        # ── Sidebar ──────────────────────────────────────────────────────────
+        sidebar_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        sidebar_vbox.set_size_request(220, -1)
+        sidebar_vbox.add_css_class("background")
+
+        bender_icon = Gtk.Image.new_from_icon_name("com.taliskerman.bender")
+        bender_icon.set_pixel_size(96)
+        bender_icon.set_margin_top(24)
+        bender_icon.set_margin_bottom(12)
+        sidebar_vbox.append(bender_icon)
+
+        self.stack = Gtk.Stack()
+        sidebar = Gtk.StackSidebar(stack=self.stack)
+        sidebar.set_vexpand(True)
+        sidebar_vbox.append(sidebar)
+
+        main_hbox.append(sidebar_vbox)
+
+        # Separator
+        main_hbox.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
+
+        # ── Main Content ─────────────────────────────────────────────────────
+        content_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        content_vbox.set_hexpand(True)
 
         # ── Header bar ───────────────────────────────────────────────────────
         header = Adw.HeaderBar()
         header.set_centering_policy(Adw.CenteringPolicy.STRICT)
-
-        # Title widget — ViewSwitcher (top bar navigation)
-        self.stack = Adw.ViewStack()
-        switcher = Adw.ViewSwitcher(stack=self.stack, policy=Adw.ViewSwitcherPolicy.WIDE)
-        header.set_title_widget(switcher)
 
         # Hamburger menu
         menu = Gio.Menu()
@@ -51,7 +73,7 @@ class BenderWindow(Adw.ApplicationWindow):
         menu_btn.set_menu_model(menu)
         header.pack_end(menu_btn)
 
-        root_box.append(header)
+        content_vbox.append(header)
 
         # ── Theme actions ─────────────────────────────────────────────────────
         for name, scheme in [
@@ -72,6 +94,7 @@ class BenderWindow(Adw.ApplicationWindow):
             ("system",      "computer-symbolic",         "System",      SystemTab()),
             ("security",    "security-high-symbolic",    "Security",    SecurityTab()),
             ("network",     "network-wired-symbolic",    "Network",     NetworkTab()),
+            ("connections", "network-server-symbolic",   "Connections", ActiveConnectionsTab()),
             ("maintenance", "emblem-system-symbolic",    "Maintenance", MaintenanceTab()),
             ("weather",     "weather-clear-symbolic",    "Weather",     WeatherTab()),
             ("proxy",       "network-vpn-symbolic",      "Proxy",       ProxyTab()),
@@ -80,14 +103,10 @@ class BenderWindow(Adw.ApplicationWindow):
             page = self.stack.add_titled(widget, name, title)
             page.set_icon_name(icon)
 
-        root_box.append(self.stack)
+        content_vbox.append(self.stack)
+        main_hbox.append(content_vbox)
 
-        # ── Bottom switcher bar (for narrower windows) ────────────────────────
-        bar = Adw.ViewSwitcherBar(stack=self.stack)
-        bar.set_reveal(True)
-        root_box.append(bar)
-
-    # ── Helpers ───────────────────────────────────────────────────────────────
+    # ── Handlers ───────────────────────────────────────────────────────────────
 
     def _set_theme(self, scheme):
         Adw.StyleManager.get_default().set_color_scheme(scheme)

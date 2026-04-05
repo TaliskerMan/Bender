@@ -5,8 +5,10 @@ import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw
+from gi.repository import Gtk, Adw
 from .runner import CommandRunner
 import shlex
+import re
 
 
 def _tool_row(label: str, placeholder: str, btn_label: str, on_clicked) -> tuple:
@@ -49,21 +51,7 @@ class NetworkTab(Gtk.Box):
         scroll.set_child(inner)
         self.append(scroll)
 
-        # ── Active Connections ────────────────────────────────────────────────
-        conn_hdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        conn_lbl = Gtk.Label(label="🌐  Active Connections", xalign=0, hexpand=True)
-        conn_lbl.add_css_class("heading")
-        conn_hdr.append(conn_lbl)
 
-        refresh_btn = Gtk.Button(label="⟳ Refresh")
-        refresh_btn.connect("clicked", self._refresh_conns)
-        conn_hdr.append(refresh_btn)
-        inner.append(conn_hdr)
-
-        self._conn_sw, self._conn_buf = _output_view()
-        inner.append(self._conn_sw)
-
-        inner.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL, margin_top=8))
 
         # ── Port Checker ──────────────────────────────────────────────────────
         port_lbl = Gtk.Label(label="🔌  Port Checker", xalign=0)
@@ -139,17 +127,11 @@ class NetworkTab(Gtk.Box):
         self._ddos_sw.set_min_content_height(80)
         inner.append(self._ddos_sw)
 
-        # Initial load
-        self._refresh_conns()
+
 
     # ── Handlers ──────────────────────────────────────────────────────────────
 
-    def _refresh_conns(self, *_):
-        self._conn_buf.set_text("Loading…")
-        CommandRunner.run_shell(
-            "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null",
-            lambda o, e, r: self._conn_buf.set_text(o or e or "No data")
-        )
+
 
     def _check_port(self, _btn):
         port = self._port_entry.get_text().strip()
@@ -167,6 +149,11 @@ class NetworkTab(Gtk.Box):
         if not domain:
             self._dns_buf.set_text("Enter a domain name first.")
             return
+            
+        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+            self._dns_buf.set_text("Invalid domain format detected.")
+            return
+            
         self._dns_buf.set_text(f"Looking up {domain}…")
         CommandRunner.run_shell(
             f"dig {shlex.quote(domain)}",
@@ -178,6 +165,11 @@ class NetworkTab(Gtk.Box):
         if not domain:
             self._whois_buf.set_text("Enter a domain name first.")
             return
+            
+        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+            self._whois_buf.set_text("Invalid domain format detected.")
+            return
+            
         self._whois_buf.set_text(f"Running whois on {domain}…")
         CommandRunner.run_shell(
             f"whois {shlex.quote(domain)} 2>&1 | head -60",

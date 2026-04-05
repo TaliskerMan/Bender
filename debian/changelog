@@ -1,3 +1,11 @@
+bender (0.1.2-1) unstable; urgency=medium
+
+  * UI Modernization: Refactored Master Terminal into a unified layout for Maintenance and Security dashboards.
+  * UI Fixes: Cleaned application GTK scaling behavior, extracted Connections component, and switched Weather selector.
+  * Structural Security Hardening: Sealed Argument Injection vulnerabilities targeting background data APIs.
+
+ -- Chuck Talk <chuck@nordheim.online>  Sun, 05 Apr 2026 12:19:37 -0500
+
 bender (0.1.1-1) unstable; urgency=medium
 
   * Security updates: fixed command injections in network and proxy tabs.

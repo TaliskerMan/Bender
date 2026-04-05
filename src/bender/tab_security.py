@@ -71,11 +71,12 @@ CHECKS = [
 
 
 class _CheckRow(Gtk.Box):
-    """A single check row: icon | label | status badge | Run button | expander output."""
+    """A single check row: icon | label | status badge | Run button."""
 
-    def __init__(self, check: dict):
+    def __init__(self, check: dict, output_buf):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._check = check
+        self._buf = output_buf
 
         top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8,
                       margin_top=6, margin_bottom=6,
@@ -96,37 +97,26 @@ class _CheckRow(Gtk.Box):
         self._run_btn.connect("clicked", self._run)
         top.append(self._run_btn)
 
-        # Output expander
-        self._exp = Gtk.Expander(label="Output")
-        self._exp.set_margin_start(12)
-        self._exp.set_margin_end(12)
-        self._exp.set_margin_bottom(4)
-
-        self._tv = Gtk.TextView(editable=False, cursor_visible=False,
-                                wrap_mode=Gtk.WrapMode.WORD_CHAR)
-        self._tv.add_css_class("monospace")
-        self._buf = self._tv.get_buffer()
-
-        sw = Gtk.ScrolledWindow(vexpand=False, min_content_height=100)
-        sw.set_child(self._tv)
-        self._exp.set_child(sw)
-        self.append(self._exp)
-
         sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         self.append(sep)
 
     def _run(self, _btn=None):
         self._badge.set_text("⏳")
         self._run_btn.set_sensitive(False)
-        self._exp.set_expanded(True)
-        self._buf.set_text("Running…")
+        
+        end_iter = self._buf.get_end_iter()
+        self._buf.insert(end_iter, f"\n--- Security Check: {self._check['label']} ---\nRunning...\n")
+        
         CommandRunner.run_shell(self._check["cmd"], self._on_done,
                                 use_sudo=self._check["sudo"])
 
     def _on_done(self, out, err, rc):
         self._run_btn.set_sensitive(True)
         result = out or err or "(no output)"
-        self._buf.set_text(result)
+        
+        end_iter = self._buf.get_end_iter()
+        self._buf.insert(end_iter, f"{result}\n")
+        
         if rc == 0:
             if not out.strip() or "No" in out or out.strip() == "":
                 self._badge.set_text("✅")
@@ -168,11 +158,38 @@ class SecurityTab(Gtk.Box):
         scroll.set_child(checks_box)
         self.append(scroll)
 
+        # ── Global Terminal ──────────────────────────────────────────────────
+        terminal_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, margin_top=16, margin_bottom=8)
+        
+        term_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        terminal_label = Gtk.Label(label="Global Security Output", xalign=0, hexpand=True)
+        terminal_label.add_css_class("heading")
+        term_header.append(terminal_label)
+        
+        clear_btn = Gtk.Button(label="Clear", valign=Gtk.Align.CENTER)
+        clear_btn.connect("clicked", self._clear_terminal)
+        term_header.append(clear_btn)
+        
+        terminal_box.append(term_header)
+
+        self._console_tv = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR)
+        self._console_tv.add_css_class("monospace")
+        self._console_buf = self._console_tv.get_buffer()
+        
+        sw_term = Gtk.ScrolledWindow(vexpand=True, min_content_height=200)
+        sw_term.set_child(self._console_tv)
+        terminal_box.append(sw_term)
+
+        self.append(terminal_box)
+
         self._rows: list[_CheckRow] = []
         for check in CHECKS:
-            row = _CheckRow(check)
+            row = _CheckRow(check, self._console_buf)
             checks_box.append(row)
             self._rows.append(row)
+
+    def _clear_terminal(self, _btn):
+        self._console_buf.set_text("")
 
     def _run_all(self, _btn):
         for row in self._rows:

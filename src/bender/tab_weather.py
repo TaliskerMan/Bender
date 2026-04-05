@@ -6,6 +6,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 from .runner import CommandRunner
+import re
 
 class WeatherTab(Gtk.Box):
     def __init__(self):
@@ -42,9 +43,10 @@ class WeatherTab(Gtk.Box):
         self._city_entry.connect("activate", self._fetch)
         ctrl.append(self._city_entry)
 
-        unit_btn = Gtk.ToggleButton(label="°C / °F")
-        unit_btn.connect("toggled", self._toggle_units)
-        ctrl.append(unit_btn)
+        # Temperature Unit Dropdown
+        self._unit_dropdown = Gtk.DropDown.new_from_strings(["°F (Imperial)", "°C (Metric)"])
+        self._unit_dropdown.connect("notify::selected", self._on_unit_changed)
+        ctrl.append(self._unit_dropdown)
 
         fetch_btn = Gtk.Button(label="Get Weather")
         fetch_btn.add_css_class("suggested-action")
@@ -62,9 +64,9 @@ class WeatherTab(Gtk.Box):
         self._output_box.append(self._status_lbl)
 
         # And a monospaced view for the raw CLI output for reliability
-        tv_box = Gtk.Box(margin_top=20)
-        tv_frame = Gtk.Frame()
-        self._tv = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR)
+        tv_box = Gtk.Box(margin_top=20, hexpand=True)
+        tv_frame = Gtk.Frame(hexpand=True)
+        self._tv = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR, hexpand=True)
         self._tv.add_css_class("monospace")
         self._tv.set_margin_top(12)
         self._tv.set_margin_bottom(12)
@@ -83,7 +85,12 @@ class WeatherTab(Gtk.Box):
         if not city:
             return
             
-        unit = "metric" if self._use_metric else "imperial"
+        if not re.match(r"^[a-zA-Z0-9.,_ ]+$", city):
+            self._status_lbl.set_text("Invalid location format.")
+            self._buf.set_text("Only alphanumeric characters and commas are allowed in locations.")
+            return
+            
+        unit = "metric" if self._unit_dropdown.get_selected() == 1 else "imperial"
         self._status_lbl.set_text(f"Fetching weather for {city}...")
         self._buf.set_text("Loading...")
         
@@ -91,7 +98,7 @@ class WeatherTab(Gtk.Box):
         # We quote the city to prevent injection, though runner.run uses list args safely anyway.
         # But we'll construct the list arguments directly for maximum safety:
         cmd = ["ansiweather", "-l", city, "-u", unit, "-s", "true", "-f", "7", "-d", "true", "-a", "false"]
-        CommandRunner.run(cmd, self._on_done, shell=False)
+        CommandRunner.run(cmd, self._on_done)
 
     def _on_done(self, out, err, rc):
         if rc != 0:
@@ -132,6 +139,5 @@ class WeatherTab(Gtk.Box):
         else:
              self._status_lbl.set_text(text)
 
-    def _toggle_units(self, btn):
-        self._use_metric = btn.get_active()
+    def _on_unit_changed(self, dropdown, pspec):
         self._fetch()
