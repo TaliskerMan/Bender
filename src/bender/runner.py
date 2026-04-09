@@ -13,20 +13,18 @@ class CommandRunner:
     """
 
     @staticmethod
-    def run(cmd: list | str, callback, use_sudo: bool = False, shell: bool = False):
+    def run(cmd: list | str, callback, use_sudo: bool = False):
         """
         Args:
-            cmd: command as list or shell string
+            cmd: command as list
             callback: callable(stdout: str, stderr: str, returncode: int)
             use_sudo: if True, wraps cmd in pkexec for privilege escalation
-            shell: if True, treat cmd as a shell string
         """
         if use_sudo:
             if isinstance(cmd, list):
-                cmd = ['pkexec'] + cmd
+                cmd = ['/usr/bin/pkexec'] + cmd
             else:
-                cmd = ['pkexec', 'bash', '-c', cmd]
-                shell = False
+                cmd = ['/usr/bin/pkexec', 'bash', '-c', cmd]
 
         def _worker():
             try:
@@ -34,8 +32,7 @@ class CommandRunner:
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=60,
-                    shell=shell
+                    timeout=60
                 )
                 stdout = result.stdout.strip()
                 stderr = result.stderr.strip()
@@ -61,7 +58,11 @@ class CommandRunner:
     @staticmethod
     def run_shell(cmd_str: str, callback, use_sudo: bool = False):
         """Convenience wrapper for shell string commands."""
-        CommandRunner.run(cmd_str, callback, use_sudo=use_sudo, shell=True)
+        if use_sudo:
+            CommandRunner.run(cmd_str, callback, use_sudo=True)
+        else:
+            cmd_list = ["/bin/bash", "-c", cmd_str]
+            CommandRunner.run(cmd_list, callback, use_sudo=False)
 
     @staticmethod
     def command_exists(name: str) -> bool:

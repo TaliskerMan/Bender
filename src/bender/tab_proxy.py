@@ -190,8 +190,8 @@ class ProxyTab(Gtk.Box):
         self._action_status.set_text("Saving blocklist (requires polkit auth)…")
         def _write():
             try:
-                proc = subprocess.run(
-                    ["pkexec", "tee", FILTER_FILE],
+                proc = subprocess.run( # nosec B603
+                    ["/usr/bin/pkexec", "tee", FILTER_FILE],
                     input=content, text=True,
                     capture_output=True, timeout=30
                 )
@@ -228,7 +228,10 @@ class ProxyTab(Gtk.Box):
         def _worker():
             try:
                 import urllib.request
-                with urllib.request.urlopen(HOSTS_URL, timeout=30) as resp:
+                if not HOSTS_URL.startswith("https://"):
+                    raise ValueError("HTTPS scheme required")
+                req = urllib.request.Request(HOSTS_URL)
+                with urllib.request.urlopen(req, timeout=30) as resp: # nosec B310
                     raw = resp.read().decode()
                 # Extract domains
                 domains = [
@@ -238,13 +241,13 @@ class ProxyTab(Gtk.Box):
                     and line.split()[1] not in ("0.0.0.0", "localhost", "localhost.localdomain")
                 ]
                 content = "\n".join(domains) + "\n"
-                proc = subprocess.run(
-                    ["pkexec", "tee", FILTER_FILE],
+                proc = subprocess.run( # nosec B603
+                    ["/usr/bin/pkexec", "tee", FILTER_FILE],
                     input=content, text=True,
                     capture_output=True, timeout=30
                 )
                 if proc.returncode == 0:
-                    subprocess.run(["pkexec", "systemctl", "restart", "tinyproxy"],
+                    subprocess.run(["/usr/bin/pkexec", "systemctl", "restart", "tinyproxy"], # nosec B603
                                    timeout=15)
                     GLib.idle_add(self._action_status.set_text,
                                   f"Blocklist updated: {len(domains):,} domains blocked.")

@@ -17,13 +17,6 @@ ACTIONS = [
         "sudo":     True,
     },
     {
-        "label":    "Flatpak Update",
-        "subtitle": "Update all installed Flatpak applications",
-        "icon":     "package-x-generic-symbolic",
-        "cmd":      "flatpak update -y 2>&1 || echo 'flatpak not installed'",
-        "sudo":     False,
-    },
-    {
         "label":    "Clear Shared Memory (/dev/shm)",
         "subtitle": "Remove stale files from the shared memory filesystem",
         "icon":     "edit-clear-symbolic",
