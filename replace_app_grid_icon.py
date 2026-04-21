@@ -4,7 +4,19 @@ import shutil
 import glob
 import subprocess
 import argparse
-import xml.etree.ElementTree as ET
+# B-02 FIX: defusedxml prevents XXE and Billion-Laughs DoS attacks when parsing
+# untrusted SVG/XML input (CWE-611). defusedxml is a drop-in replacement.
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    # Fallback with a clear warning if defusedxml is not installed.
+    import warnings
+    warnings.warn(
+        "defusedxml is not installed. Install it with: pip install defusedxml\n"
+        "Falling back to xml.etree.ElementTree which is vulnerable to XXE (CWE-611).",
+        stacklevel=1
+    )
+    import xml.etree.ElementTree as ET  # nosec B405
 import urllib.request
 
 LOG_URL = "https://raw.githubusercontent.com/pop-os/icon-theme/master/Pop/256x256/places/distributor-logo-pop-os.svg"
@@ -12,7 +24,15 @@ LOG_URL = "https://raw.githubusercontent.com/pop-os/icon-theme/master/Pop/256x25
 def download_logo(url, output_path):
     print(f"Downloading logo from {url}...")
     try:
-        urllib.request.urlretrieve(url, output_path)
+        # B-05 FIX: Use urlopen() with an explicit 30-second timeout.
+        # urlretrieve() has no timeout parameter and can hang indefinitely.
+        if not url.startswith("https://"):
+            raise ValueError("Only HTTPS URLs are permitted.")
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
+            data = resp.read()
+        with open(output_path, 'wb') as fh:
+            fh.write(data)
         print("Download successful.")
         return True
     except Exception as e:

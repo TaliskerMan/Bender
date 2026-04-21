@@ -4,8 +4,7 @@
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw
-from gi.repository import Gtk, Adw
+from gi.repository import Gtk, Adw  # B-06: removed duplicate import
 from .runner import CommandRunner
 import shlex
 import re
@@ -135,13 +134,17 @@ class NetworkTab(Gtk.Box):
 
     def _check_port(self, _btn):
         port = self._port_entry.get_text().strip()
-        if not port.isdigit():
-            self._port_buf.set_text("Please enter a valid port number.")
+        # Strict numeric validation — isdigit() + range check
+        if not port.isdigit() or not (1 <= int(port) <= 65535):
+            self._port_buf.set_text("Please enter a valid port number (1–65535).")
             return
         self._port_buf.set_text(f"Checking port {port}…")
-        CommandRunner.run_shell(
-            f"lsof -iTCP:{port} -sTCP:LISTEN -n -P 2>/dev/null || echo 'No process listening on port {port}'",
-            lambda o, e, r: self._port_buf.set_text(o or e or "No data")
+        # B-01 FIX: list-form — port is never interpreted by a shell
+        CommandRunner.run(
+            ["lsof", f"-iTCP:{port}", "-sTCP:LISTEN", "-n", "-P"],
+            lambda o, e, r: self._port_buf.set_text(
+                o or f"No process listening on port {port}" if r != 0 else o or "No data"
+            )
         )
 
     def _do_dig(self, _btn):
@@ -149,14 +152,15 @@ class NetworkTab(Gtk.Box):
         if not domain:
             self._dns_buf.set_text("Enter a domain name first.")
             return
-            
+
         if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
             self._dns_buf.set_text("Invalid domain format detected.")
             return
-            
+
         self._dns_buf.set_text(f"Looking up {domain}…")
-        CommandRunner.run_shell(
-            f"dig {shlex.quote(domain)}",
+        # B-01 FIX: list-form — domain is passed as a discrete argument, not shell-interpolated
+        CommandRunner.run(
+            ["dig", domain],
             lambda o, e, r: self._dns_buf.set_text(o or e or "dig not found")
         )
 
@@ -165,15 +169,19 @@ class NetworkTab(Gtk.Box):
         if not domain:
             self._whois_buf.set_text("Enter a domain name first.")
             return
-            
+
         if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
             self._whois_buf.set_text("Invalid domain format detected.")
             return
-            
+
         self._whois_buf.set_text(f"Running whois on {domain}…")
-        CommandRunner.run_shell(
-            f"whois {shlex.quote(domain)} 2>&1 | head -60",
-            lambda o, e, r: self._whois_buf.set_text(o or e or "whois not found")
+        # B-01 FIX: list-form — domain passed as discrete argument
+        # Note: head -60 piping dropped in favour of truncating in the callback
+        CommandRunner.run(
+            ["whois", domain],
+            lambda o, e, r: self._whois_buf.set_text(
+                "\n".join((o or e or "whois not found").splitlines()[:60])
+            )
         )
 
     def _flush_dns(self, _btn):
