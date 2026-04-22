@@ -177,10 +177,17 @@ class ProxyTab(Gtk.Box):
         )
 
     def _load_blocklist(self, *_):
-        CommandRunner.run_shell(
-            f"cat {FILTER_FILE} 2>/dev/null || echo '# Blocklist empty or file missing'",
-            lambda o, e, r: self._bl_buf.set_text(o or "")
-        )
+        # B-01 FIX: Read the filter file directly in Python — no shell involvement
+        import os
+        try:
+            if os.path.exists(FILTER_FILE):
+                with open(FILTER_FILE, 'r', encoding='utf-8', errors='replace') as fh:
+                    content = fh.read()
+            else:
+                content = '# Blocklist empty or file missing'
+        except OSError as e:
+            content = f'# Could not read blocklist: {e}'
+        self._bl_buf.set_text(content)
 
     def _save_blocklist(self, *_):
         start = self._bl_buf.get_start_iter()
@@ -213,41 +220,80 @@ class ProxyTab(Gtk.Box):
             return
 
         self._action_status.set_text(f"Adding {domain} to blocklist…")
-        CommandRunner.run_shell(
-            f"echo {shlex.quote(domain)} >> {FILTER_FILE} && systemctl restart tinyproxy",
-            lambda o, e, r: (
-                self._action_status.set_text(f"Added {domain}." if r == 0 else f"Error: {e}"),
-                self._load_blocklist()
-            ),
-            use_sudo=True
-        )
+
+        # B-01 FIX: append domain via Python write (read current, append, write back)
+        # Uses pkexec tee with the domain passed via stdin (no shell interpolation).
+        import threading
+        def _append():
+            try:
+                proc = subprocess.run(  # nosec B603 — list-form, domain via stdin
+                    ["/usr/bin/pkexec", "tee", "-a", FILTER_FILE],
+                    input=domain + "\n",
+                    text=True,
+                    capture_output=True,
+                    timeout=15
+                )
+                if proc.returncode == 0:
+                    subprocess.run(  # nosec B603 — list-form
+                        ["/usr/bin/pkexec", "systemctl", "restart", "tinyproxy"],
+                        timeout=15
+                    )
+                    GLib.idle_add(self._action_status.set_text, f"Added {domain}.")
+                    GLib.idle_add(self._load_blocklist)
+                else:
+                    GLib.idle_add(self._action_status.set_text,
+                                  f"Error: {proc.stderr}")
+            except Exception as e:
+                GLib.idle_add(self._action_status.set_text, f"Error: {e}")
+
+        threading.Thread(target=_append, daemon=True).start()
         self._quick_entry.set_text("")
 
     def _auto_update(self, *_):
         self._action_status.set_text("Downloading Steven Black hosts list…")
+
+        # B-04: Maximum download size (50 MB) to prevent DoS via huge response
+        MAX_BYTES = 50 * 1024 * 1024
+        # Domain regex for per-entry validation before writing
+        _DOMAIN_RE = re.compile(r"^[a-zA-Z0-9.-]+$")
+
         def _worker():
             try:
                 import urllib.request
                 if not HOSTS_URL.startswith("https://"):
                     raise ValueError("HTTPS scheme required")
                 req = urllib.request.Request(HOSTS_URL)
-                with urllib.request.urlopen(req, timeout=30) as resp: # nosec B310
-                    raw = resp.read().decode()
-                # Extract domains
-                domains = [
-                    line.split()[1]
-                    for line in raw.splitlines()
-                    if line.startswith("0.0.0.0") and len(line.split()) >= 2
-                    and line.split()[1] not in ("0.0.0.0", "localhost", "localhost.localdomain")
-                ]
+                with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
+                    raw_bytes = resp.read(MAX_BYTES + 1)
+
+                # B-04: Reject oversized responses
+                if len(raw_bytes) > MAX_BYTES:
+                    GLib.idle_add(self._action_status.set_text,
+                                  "Update aborted: response exceeded 50 MB size limit.")
+                    return
+
+                raw = raw_bytes.decode('utf-8', errors='replace')
+
+                # Extract and validate each domain before including it
+                domains = []
+                for line in raw.splitlines():
+                    parts = line.split()
+                    if (
+                        line.startswith("0.0.0.0")
+                        and len(parts) >= 2
+                        and parts[1] not in ("0.0.0.0", "localhost", "localhost.localdomain")
+                        and _DOMAIN_RE.match(parts[1])  # B-04: per-domain validation
+                    ):
+                        domains.append(parts[1])
+
                 content = "\n".join(domains) + "\n"
-                proc = subprocess.run( # nosec B603
+                proc = subprocess.run(  # nosec B603 — list-form
                     ["/usr/bin/pkexec", "tee", FILTER_FILE],
                     input=content, text=True,
                     capture_output=True, timeout=30
                 )
                 if proc.returncode == 0:
-                    subprocess.run(["/usr/bin/pkexec", "systemctl", "restart", "tinyproxy"], # nosec B603
+                    subprocess.run(["/usr/bin/pkexec", "systemctl", "restart", "tinyproxy"],  # nosec B603
                                    timeout=15)
                     GLib.idle_add(self._action_status.set_text,
                                   f"Blocklist updated: {len(domains):,} domains blocked.")

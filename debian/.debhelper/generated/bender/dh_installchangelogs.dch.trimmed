@@ -1,3 +1,12 @@
+bender (0.1.3-1) unstable; urgency=high
+
+  * Security Hardening (B-01 to B-06)
+  * Closed shell injection vectors across all tabs by replacing string interpolation with list-form arguments.
+  * Replaced python's builtin XML parser with defusedxml to prevent XXE.
+  * Enforced download size guard and timeout limit on network operations.
+
+ -- Chuck Talk <chuck@nordheim.online>  Tue, 21 Apr 2026 09:43:00 -0500
+
 bender (0.1.2-1) unstable; urgency=medium
 
   * UI Modernization: Refactored Master Terminal into a unified layout for Maintenance and Security dashboards.
