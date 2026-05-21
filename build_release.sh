@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Auto-increment version/build number
+python3 "/Users/charlestalk/AntiGravity/workflow-tools/increment_build.py" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # build_release.sh — Automated build, sign, and hash script for Bender
 set -e
 
