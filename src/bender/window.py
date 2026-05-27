@@ -17,7 +17,9 @@ from .tab_proxy import ProxyTab
 
 
 class BenderWindow(Adw.ApplicationWindow):
+    """BenderWindow implementation."""
     def __init__(self, app):
+        """__init__ implementation."""
         super().__init__(application=app, title="Bender")
         self.set_default_size(960, 700)
 

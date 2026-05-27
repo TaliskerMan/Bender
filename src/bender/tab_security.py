@@ -1,3 +1,13 @@
+# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# This file is part of Bender.
+#
+# Bender is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, version 3.
+#
+# Bender is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+
 # Bender — Security Audit Tab
 # Runs security checks drawn from Menul8.sh, eff0.sh, badperms.sh, lastchk.sh, killz.sh, sxid.sh
 
@@ -74,6 +84,7 @@ class _CheckRow(Gtk.Box):
     """A single check row: icon | label | status badge | Run button."""
 
     def __init__(self, check: dict, output_buf):
+        """__init__ implementation."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._check = check
         self._buf = output_buf
@@ -131,7 +142,9 @@ class _CheckRow(Gtk.Box):
 
 
 class SecurityTab(Gtk.Box):
+    """SecurityTab implementation."""
     def __init__(self):
+        """__init__ implementation."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         # ── Header strip ──────────────────────────────────────────────────────

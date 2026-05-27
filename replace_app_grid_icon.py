@@ -1,3 +1,13 @@
+# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# This file is part of Bender.
+#
+# Bender is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, version 3.
+#
+# Bender is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+
 #!/usr/bin/env python3
 import os
 import shutil
@@ -22,6 +32,7 @@ import urllib.request
 LOG_URL = "https://raw.githubusercontent.com/pop-os/icon-theme/master/Pop/256x256/places/distributor-logo-pop-os.svg"
 
 def download_logo(url, output_path):
+    """download_logo implementation."""
     print(f"Downloading logo from {url}...")
     try:
         # B-05 FIX: Use urlopen() with an explicit 30-second timeout.
@@ -158,6 +169,7 @@ def replace_icon(target_path, source_icon_path):
         print(f"Error replacing {target_path}: {e}")
 
 def main():
+    """main implementation."""
     parser = argparse.ArgumentParser(description="Replace app grid icon with Pop!_OS logo.")
     parser.add_argument("--logo", help="Path to custom logo SVG")
     parser.add_argument("--dry-run", action="store_true", help="Don't actually replace files")

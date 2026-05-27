@@ -1,3 +1,13 @@
+# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# This file is part of Bender.
+#
+# Bender is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, version 3.
+#
+# Bender is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+
 # Bender — System Overview Tab
 # Shows hostname, disk, memory, uptime, displays, and top processes.
 
@@ -28,7 +38,9 @@ def _mono_view(text: str = "") -> tuple:
 
 
 class SystemTab(Gtk.Box):
+    """SystemTab implementation."""
     def __init__(self):
+        """__init__ implementation."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         scroll = Gtk.ScrolledWindow(vexpand=True)

@@ -17,7 +17,9 @@ from .window import BenderWindow
 
 
 class BenderApp(Adw.Application):
+    """BenderApp implementation."""
     def __init__(self):
+        """__init__ implementation."""
         super().__init__(
             application_id='com.taliskerman.bender',
             flags=Gio.ApplicationFlags.FLAGS_NONE
@@ -25,11 +27,13 @@ class BenderApp(Adw.Application):
         self.window = None
 
     def do_activate(self):
+        """do_activate implementation."""
         if not self.window:
             self.window = BenderWindow(self)
         self.window.present()
 
     def do_startup(self):
+        """do_startup implementation."""
         Adw.Application.do_startup(self)
         
         # In dev mode, GTK needs to know where our local icons are
@@ -47,10 +51,12 @@ class BenderApp(Adw.Application):
         Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.DEFAULT)
 
     def do_shutdown(self):
+        """do_shutdown implementation."""
         Adw.Application.do_shutdown(self)
 
 
 def setup_logging():
+    """setup_logging implementation."""
     log_dir = Path.home() / ".local" / "state" / "bender"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "bender.log"
@@ -65,6 +71,7 @@ def setup_logging():
     logging.info("Bender initialized")
 
 def main():
+    """main implementation."""
     setup_logging()
     app = BenderApp()
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, app.quit)
