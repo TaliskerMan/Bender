@@ -41,6 +41,14 @@ ACTIONS = [
         "use_list": True,
     },
     {
+        "label":    "Flatpak Update",
+        "subtitle": "Update all installed Flatpak applications",
+        "icon":     "package-x-generic-symbolic",
+        "cmd":      ["flatpak", "update", "-y", "--noninteractive"],
+        "sudo":     True,
+        "use_list": True,
+    },
+    {
         "label":    "Clear Shared Memory (/dev/shm)",
         "subtitle": "Remove stale files from the shared memory filesystem",
         "icon":     "edit-clear-symbolic",
