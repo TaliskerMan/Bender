@@ -44,9 +44,9 @@ ACTIONS = [
         "label":    "Flatpak Update",
         "subtitle": "Update all installed Flatpak applications",
         "icon":     "package-x-generic-symbolic",
-        "cmd":      ["flatpak", "update", "-y", "--noninteractive"],
-        "sudo":     True,
-        "use_list": True,
+        "cmd":      "echo 'Updating User Flatpaks...'; flatpak update --user -y --noninteractive; if flatpak list --system | grep -q .; then echo 'Updating System Flatpaks...'; pkexec flatpak update --system -y --noninteractive; fi; echo 'Flatpak update complete.'",
+        "sudo":     False,
+        "use_list": False,
     },
     {
         "label":    "Clear Shared Memory (/dev/shm)",
