@@ -1,3 +1,9 @@
+bender (0.1.5-1) unstable; urgency=medium
+
+  * Release 0.1.5-1 with logo and legal fixes
+
+ -- Chuck Talk <chuck@nordheim.online>  Wed, 10 Jun 2026 12:52:16 +0000
+
 bender (0.1.4-1) unstable; urgency=medium
 
   * Release 0.1.4-1 auto-incremented by build helper script (Rule_017)

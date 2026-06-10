@@ -47,10 +47,11 @@ class BenderWindow(Adw.ApplicationWindow):
         sidebar_vbox.append(sidebar)
 
         try:
-            img_path = os.path.join(os.path.dirname(__file__), '../../data/noln.png')
+            img_path = os.path.join(os.path.dirname(__file__), '../../data/noln_ui.png')
             if not os.path.exists(img_path):
-                img_path = '/usr/share/bender/data/noln.png'
+                img_path = '/usr/share/bender/data/noln_ui.png'
             noln_img = Gtk.Image.new_from_file(img_path)
+            noln_img.set_pixel_size(96)
         except Exception:
             noln_img = Gtk.Image()
 
@@ -140,8 +141,8 @@ class BenderWindow(Adw.ApplicationWindow):
             version=version,
             comments="Linux workstation dashboard — Bite my shiny metal app!",
             website="https://github.com/TaliskerMan/Bender",
-            copyright="© 2026 Chuck Talk &lt;chuck@nordheim.online&gt;",
-            license_type=Gtk.License.AGPL_3_0,
+            copyright="© 2026 Chuck Talk <chuck@nordheim.online>",
+            license_type=Gtk.License.GPL_3_0,
         )
         try:
             license_path = os.path.join(os.path.dirname(__file__), '../../LICENSE')
@@ -150,7 +151,16 @@ class BenderWindow(Adw.ApplicationWindow):
             with open(license_path, 'r', encoding='utf-8') as f:
                 license_text = f.read()
         except Exception:
-            license_text = "GNU Affero General Public License v3.0\nSee https://www.gnu.org/licenses/agpl-3.0.html"
+            license_text = "GNU General Public License v3.0\nSee https://www.gnu.org/licenses/gpl-3.0.html"
 
         about.set_license(license_text)
+
+        # Populate the Legal page with copyright and license info
+        about.add_legal_section(
+            "Bender",
+            "© 2026 Chuck Talk <chuck@nordheim.online>",
+            Gtk.License.GPL_3_0,
+            None,
+        )
+
         about.present()
