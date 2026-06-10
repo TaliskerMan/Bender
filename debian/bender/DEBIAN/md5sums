@@ -1,9 +1,9 @@
 aee3f5467de026fe6ce157ae4755d701  usr/bin/bender
-c72246579c4437c07cebb86fbcbc6d90  usr/lib/python3/dist-packages/bender-0.1.6.dist-info/INSTALLER
-ed49ed84747e53d3e0fc58049d437af6  usr/lib/python3/dist-packages/bender-0.1.6.dist-info/METADATA
-a227bf38fb17005b3bdb56ccc428b1bb  usr/lib/python3/dist-packages/bender-0.1.6.dist-info/WHEEL
-0363c4104e3feb0ff85054c235fa048c  usr/lib/python3/dist-packages/bender-0.1.6.dist-info/entry_points.txt
-4b8905d71bb1a0fb1faff9b6af994e6b  usr/lib/python3/dist-packages/bender-0.1.6.dist-info/top_level.txt
+c72246579c4437c07cebb86fbcbc6d90  usr/lib/python3/dist-packages/bender-0.1.7.dist-info/INSTALLER
+a66965fcf371cb814a4680807b1deadf  usr/lib/python3/dist-packages/bender-0.1.7.dist-info/METADATA
+a227bf38fb17005b3bdb56ccc428b1bb  usr/lib/python3/dist-packages/bender-0.1.7.dist-info/WHEEL
+0363c4104e3feb0ff85054c235fa048c  usr/lib/python3/dist-packages/bender-0.1.7.dist-info/entry_points.txt
+4b8905d71bb1a0fb1faff9b6af994e6b  usr/lib/python3/dist-packages/bender-0.1.7.dist-info/top_level.txt
 22e65fb4cd13b3ff593d740924f5a242  usr/lib/python3/dist-packages/bender/__init__.py
 032977e9ef33375344f06b129a8c7067  usr/lib/python3/dist-packages/bender/__main__.py
 3b82f25375a00e9e41d6294078bd62c4  usr/lib/python3/dist-packages/bender/main.py
@@ -15,7 +15,7 @@ cedb93b79380ad3e24a18a463375e478  usr/lib/python3/dist-packages/bender/tab_maint
 c6fa208b9385b7ac394467d7ee666ea2  usr/lib/python3/dist-packages/bender/tab_security.py
 dbd63466adbf6c6a03141a06cca380b7  usr/lib/python3/dist-packages/bender/tab_system.py
 a19e3c433f7ed83261a97a669077b6c3  usr/lib/python3/dist-packages/bender/tab_weather.py
-dcace01fbfd6fb2c8f84555f909deb6a  usr/lib/python3/dist-packages/bender/window.py
+7df02d335001687224acf116f0b43a0b  usr/lib/python3/dist-packages/bender/window.py
 e0ebec153437c2be02cde862077dbd28  usr/share/applications/com.taliskerman.bender.desktop
 1ebbd3e34237af26da5dc08a4e440464  usr/share/bender/LICENSE
 14279782411704925b21ad91c287deaf  usr/share/bender/data/noln.png
