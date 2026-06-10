@@ -141,8 +141,8 @@ class BenderWindow(Adw.ApplicationWindow):
             version=version,
             comments="Linux workstation dashboard — Bite my shiny metal app!",
             website="https://github.com/TaliskerMan/Bender",
-            copyright="© 2026 Chuck Talk <chuck@nordheim.online>",
-            license_type=Gtk.License.GPL_3_0,
+            copyright="Copyright Chuck Talk, a Nordheim Online Product",
+            license_type=Gtk.License.CUSTOM,
         )
         try:
             license_path = os.path.join(os.path.dirname(__file__), '../../LICENSE')
@@ -154,13 +154,5 @@ class BenderWindow(Adw.ApplicationWindow):
             license_text = "GNU General Public License v3.0\nSee https://www.gnu.org/licenses/gpl-3.0.html"
 
         about.set_license(license_text)
-
-        # Populate the Legal page with copyright and license info
-        about.add_legal_section(
-            "Bender",
-            "© 2026 Chuck Talk <chuck@nordheim.online>",
-            Gtk.License.GPL_3_0,
-            None,
-        )
 
         about.present()
