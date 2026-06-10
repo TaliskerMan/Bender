@@ -46,6 +46,19 @@ class BenderWindow(Adw.ApplicationWindow):
         sidebar.set_vexpand(True)
         sidebar_vbox.append(sidebar)
 
+        try:
+            img_path = os.path.join(os.path.dirname(__file__), '../../data/noln.png')
+            if not os.path.exists(img_path):
+                img_path = '/usr/share/bender/data/noln.png'
+            noln_img = Gtk.Image.new_from_file(img_path)
+        except Exception:
+            noln_img = Gtk.Image()
+
+        link_btn = Gtk.LinkButton(uri="https://nordheim.online")
+        link_btn.set_child(noln_img)
+        link_btn.set_margin_bottom(12)
+        sidebar_vbox.append(link_btn)
+
         main_hbox.append(sidebar_vbox)
 
         # Separator
@@ -128,19 +141,16 @@ class BenderWindow(Adw.ApplicationWindow):
             comments="Linux workstation dashboard — Bite my shiny metal app!",
             website="https://github.com/TaliskerMan/Bender",
             copyright="© 2026 Chuck Talk &lt;chuck@nordheim.online&gt;",
-            license_type=Gtk.License.GPL_3_0,
+            license_type=Gtk.License.AGPL_3_0,
         )
-        # Legal blurb shown under the license button
-        about.set_license(
-            "This program is free software: you can redistribute it and/or modify it "
-            "under the terms of the GNU General Public License as published by the "
-            "Free Software Foundation, either version 3 of the License, or "
-            "(at your option) any later version.\n\n"
-            "This program is distributed in the hope that it will be useful, "
-            "but WITHOUT ANY WARRANTY; without even the implied warranty of "
-            "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the "
-            "GNU General Public License for more details.\n\n"
-            "You should have received a copy of the GNU General Public License "
-            "along with this program. If not, see https://www.gnu.org/licenses/."
-        )
+        try:
+            license_path = os.path.join(os.path.dirname(__file__), '../../LICENSE')
+            if not os.path.exists(license_path):
+                license_path = '/usr/share/bender/LICENSE'
+            with open(license_path, 'r', encoding='utf-8') as f:
+                license_text = f.read()
+        except Exception:
+            license_text = "GNU Affero General Public License v3.0\nSee https://www.gnu.org/licenses/agpl-3.0.html"
+
+        about.set_license(license_text)
         about.present()

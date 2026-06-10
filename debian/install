@@ -1,2 +1,4 @@
 data/com.taliskerman.bender.desktop usr/share/applications
 data/icons/hicolor/512x512/apps/com.taliskerman.bender.png usr/share/icons/hicolor/512x512/apps
+data/noln.png usr/share/bender/data
+LICENSE usr/share/bender

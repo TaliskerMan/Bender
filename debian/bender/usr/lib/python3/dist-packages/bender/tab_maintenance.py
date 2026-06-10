@@ -35,10 +35,18 @@ ACTIONS = [
         "label":    "System Update (nala)",
         "subtitle": "Update package lists and upgrade all packages",
         "icon":     "software-update-available-symbolic",
-        # List-form: pkexec nala upgrade -y  (update+upgrade handled by nala upgrade)
-        "cmd":      ["nala", "upgrade", "-y"],
+        # Privileged shell pipeline: nala update && nala upgrade -y
+        "cmd":      "nala update && nala upgrade -y",
         "sudo":     True,
-        "use_list": True,
+        "use_list": False,
+    },
+    {
+        "label":    "Flatpak Update",
+        "subtitle": "Update all installed Flatpak applications",
+        "icon":     "package-x-generic-symbolic",
+        "cmd":      "echo 'Updating User Flatpaks...'; flatpak update --user -y --noninteractive; if flatpak list --system | grep -q .; then echo 'Updating System Flatpaks...'; pkexec flatpak update --system -y --noninteractive; fi; echo 'Flatpak update complete.'",
+        "sudo":     False,
+        "use_list": False,
     },
     {
         "label":    "Clear Shared Memory (/dev/shm)",
