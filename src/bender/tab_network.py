@@ -50,9 +50,14 @@ def _output_view() -> tuple:
 
 
 class NetworkTab(Gtk.Box):
-    """NetworkTab implementation."""
+    """
+    NetworkTab builds a utility dashboard containing port checking, domain 
+    dig queries, whois registries, DNS cache flushing, and connection scans.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the NetworkTab widget and lays out the various sub-panels.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         scroll = Gtk.ScrolledWindow(vexpand=True)
@@ -145,6 +150,10 @@ class NetworkTab(Gtk.Box):
 
 
     def _check_port(self, _btn):
+        """
+        Checks if a TCP port is open locally by running lsof on the system.
+        Performs basic numeric validation before running command runner.
+        """
         port = self._port_entry.get_text().strip()
         # Strict numeric validation — isdigit() + range check
         if not port.isdigit() or not (1 <= int(port) <= 65535):
@@ -160,6 +169,10 @@ class NetworkTab(Gtk.Box):
         )
 
     def _do_dig(self, _btn):
+        """
+        Runs a standard DNS lookup (dig) for the entered domain.
+        Uses regex checks to ensure domain parameters do not contain shell injection syntax.
+        """
         domain = self._dns_entry.get_text().strip()
         if not domain:
             self._dns_buf.set_text("Enter a domain name first.")
@@ -177,6 +190,10 @@ class NetworkTab(Gtk.Box):
         )
 
     def _do_whois(self, _btn):
+        """
+        Performs a WHOIS registry lookup on the specified domain name.
+        Uses regex input validation and truncates output to 60 lines for legibility.
+        """
         domain = self._whois_entry.get_text().strip()
         if not domain:
             self._whois_buf.set_text("Enter a domain name first.")
@@ -197,6 +214,9 @@ class NetworkTab(Gtk.Box):
         )
 
     def _flush_dns(self, _btn):
+        """
+        Flushes the DNS cache via resolvectl (requires polkit/pkexec authentication).
+        """
         self._flush_buf.set_text("Flushing DNS cache (requires polkit auth)…")
         CommandRunner.run_shell(
             "resolvectl flush-caches && echo 'DNS cache flushed successfully.'",
@@ -205,6 +225,10 @@ class NetworkTab(Gtk.Box):
         )
 
     def _scan_ddos(self, _btn):
+        """
+        Runs connection statistics per IP (DDoS Indicator) by grouping active sockets.
+        Pipes ss, awk, cut, sort, and uniq on system to print top connection sources.
+        """
         self._ddos_buf.set_text("Scanning…")
         CommandRunner.run_shell(
             "ss -ntu 2>/dev/null | awk 'NR>1{print $6}' | cut -d: -f1 | sort | uniq -c | sort -rn | head -30",

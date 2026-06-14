@@ -17,9 +17,16 @@ from .window import BenderWindow
 
 
 class BenderApp(Adw.Application):
-    """BenderApp implementation."""
+    """
+    Main Libadwaita Application class for Bender.
+    
+    Coordinates the application lifecycle, including window instantiation,
+    loading custom icon assets in development environments, and teardown operations.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the Adw.Application with the specific com.taliskerman.bender ID.
+        """
         super().__init__(
             application_id='com.taliskerman.bender',
             flags=Gio.ApplicationFlags.FLAGS_NONE
@@ -27,13 +34,21 @@ class BenderApp(Adw.Application):
         self.window = None
 
     def do_activate(self):
-        """do_activate implementation."""
+        """
+        Triggers window creation and display when the application is activated.
+        """
         if not self.window:
             self.window = BenderWindow(self)
         self.window.present()
 
     def do_startup(self):
-        """do_startup implementation."""
+        """
+        Performs application initialization tasks.
+        
+        This sets up custom application icon resource paths for the GTK IconTheme 
+        if running in local development mode, and configures the default color 
+        scheme to respect the user's system preferences.
+        """
         Adw.Application.do_startup(self)
         
         # In dev mode, GTK needs to know where our local icons are
@@ -51,12 +66,19 @@ class BenderApp(Adw.Application):
         Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.DEFAULT)
 
     def do_shutdown(self):
-        """do_shutdown implementation."""
+        """
+        Cleans up resources and shuts down the application.
+        """
         Adw.Application.do_shutdown(self)
 
 
 def setup_logging():
-    """setup_logging implementation."""
+    """
+    Configures application-wide logging.
+    
+    Creates a dedicated log directory at ~/.local/state/bender/ and pipes
+    logs to both bender.log and standard stdout.
+    """
     log_dir = Path.home() / ".local" / "state" / "bender"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "bender.log"
@@ -71,11 +93,17 @@ def setup_logging():
     logging.info("Bender initialized")
 
 def main():
-    """main implementation."""
+    """
+    The main execution entry point for the bender binary script.
+    
+    Sets up logging, binds SIGINT signal handlers for clean terminal termination,
+    and runs the application loop.
+    """
     setup_logging()
     app = BenderApp()
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, app.quit)
     return app.run(sys.argv)
+
 
 
 if __name__ == '__main__':

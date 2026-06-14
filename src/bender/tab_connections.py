@@ -18,9 +18,15 @@ from gi.repository import Gtk, Adw
 from .runner import CommandRunner
 
 class ActiveConnectionsTab(Gtk.Box):
-    """ActiveConnectionsTab implementation."""
+    """
+    ActiveConnectionsTab displays a scrollable terminal view of current 
+    system network connections via command line network utilities.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the ActiveConnections tab, constructs the textview container,
+        and triggers the initial connection scan.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8,
@@ -57,6 +63,10 @@ class ActiveConnectionsTab(Gtk.Box):
         self._refresh()
 
     def _refresh(self, *_):
+        """
+        Refreshes the connection log by running ss/netstat in the background
+        and displaying the stdout in the monospace TextView buffer.
+        """
         self._buf.set_text("Scanning system connections...")
         CommandRunner.run_shell(
             "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null",

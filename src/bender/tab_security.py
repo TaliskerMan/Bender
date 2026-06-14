@@ -81,10 +81,19 @@ CHECKS = [
 
 
 class _CheckRow(Gtk.Box):
-    """A single check row: icon | label | status badge | Run button."""
+    """
+    A single check row layout representing a security audit query.
+    Displays check label, execution status badge, and individual run button.
+    """
 
     def __init__(self, check: dict, output_buf):
-        """__init__ implementation."""
+        """
+        Initializes the check row widget.
+        
+        Args:
+            check (dict): Configuration mapping containing cmd, label, and privilege configs.
+            output_buf (Gtk.TextBuffer): Reference to global console logs buffer.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._check = check
         self._buf = output_buf
@@ -112,6 +121,10 @@ class _CheckRow(Gtk.Box):
         self.append(sep)
 
     def _run(self, _btn=None):
+        """
+        Runs the security check query in a background command thread, updating 
+        the status badge and logging start markers.
+        """
         self._badge.set_text("⏳")
         self._run_btn.set_sensitive(False)
         
@@ -122,6 +135,10 @@ class _CheckRow(Gtk.Box):
                                 use_sudo=self._check["sudo"])
 
     def _on_done(self, out, err, rc):
+        """
+        Callback handler executed when the security check shell script finishes.
+        Updates status badges (success/warn/fail) and logs outputs to output console buffer.
+        """
         self._run_btn.set_sensitive(True)
         result = out or err or "(no output)"
         
@@ -142,9 +159,15 @@ class _CheckRow(Gtk.Box):
 
 
 class SecurityTab(Gtk.Box):
-    """SecurityTab implementation."""
+    """
+    SecurityTab aggregates security checks (like UID 0 checks, world-writable files,
+    zombie counts, recent logins) and renders them in a unified list with batch run utilities.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the SecurityTab panel, populates the checks list, and sets up
+        the global scrollable output log terminal.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         # ── Header strip ──────────────────────────────────────────────────────
@@ -202,8 +225,14 @@ class SecurityTab(Gtk.Box):
             self._rows.append(row)
 
     def _clear_terminal(self, _btn):
+        """
+        Clears all text content from the security output console.
+        """
         self._console_buf.set_text("")
 
     def _run_all(self, _btn):
+        """
+        Sequentially runs all configured security check items.
+        """
         for row in self._rows:
             row.run()

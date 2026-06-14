@@ -6,8 +6,15 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
 
 class AboutTab(Gtk.Box):
-    """AboutTab implementation."""
+    """
+    AboutTab displays product identity, developer attribution,
+    and the GNU GPL/AGPL license text.
+    """
     def __init__(self):
+        """
+        Initializes the About tab with the project logo, name,
+        and scrolled license view.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=16)
 
         scroll = Gtk.ScrolledWindow(vexpand=True)

@@ -19,9 +19,14 @@ from .runner import CommandRunner
 import re
 
 class WeatherTab(Gtk.Box):
-    """WeatherTab implementation."""
+    """
+    WeatherTab wraps the ansiweather CLI utility to query and display weather forecasts.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the weather panel, validating command availability, laying out 
+        inputs (city and unit selectors), and fetching the initial forecast.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._use_metric = False
 
@@ -93,6 +98,10 @@ class WeatherTab(Gtk.Box):
         self._fetch()
 
     def _fetch(self, *_):
+        """
+        Initiates a background fetch via ansiweather for the entered location and unit type.
+        Validates the city input to prevent injection characters.
+        """
         city = self._city_entry.get_text().strip()
         if not city:
             return
@@ -113,6 +122,10 @@ class WeatherTab(Gtk.Box):
         CommandRunner.run(cmd, self._on_done)
 
     def _on_done(self, out, err, rc):
+        """
+        Callback handler executed when the ansiweather command completes.
+        Strips ANSI codes, parses multi-day forecast lists, and displays formatted results.
+        """
         if rc != 0:
             self._status_lbl.set_text("Failed to fetch weather.")
             self._buf.set_text(err or out or "Unknown error.")
@@ -152,4 +165,7 @@ class WeatherTab(Gtk.Box):
              self._status_lbl.set_text(text)
 
     def _on_unit_changed(self, dropdown, pspec):
+        """
+        Triggers a fresh weather query when unit type selection dropdown is modified.
+        """
         self._fetch()

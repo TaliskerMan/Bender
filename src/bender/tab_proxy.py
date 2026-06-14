@@ -30,9 +30,15 @@ HOSTS_URL   = "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
 
 
 class ProxyTab(Gtk.Box):
-    """ProxyTab implementation."""
+    """
+    ProxyTab manages the Tinyproxy daemon. Features control buttons to start/stop
+    the service, blocklist editing, auto-updates from external hosts lists, and log tails.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the Proxy manager interface, checking if tinyproxy is installed,
+        setting up status headers, controls, editors, and consoles.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._log_tail_proc = None
 
@@ -158,6 +164,9 @@ class ProxyTab(Gtk.Box):
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def _refresh_status(self, *_):
+        """
+        Checks the status of the local tinyproxy service via systemctl.
+        """
         self._status_badge.set_text("⏳ Checking…")
         CommandRunner.run_shell(
             "systemctl is-active tinyproxy",
@@ -165,12 +174,18 @@ class ProxyTab(Gtk.Box):
         )
 
     def _on_status(self, out, err, rc):
+        """
+        Callback updating the status indicator label depending on service state.
+        """
         if out.strip() == "active":
             self._status_badge.set_text("🟢  Active")
         else:
             self._status_badge.set_text("🔴  Inactive")
 
     def _start_proxy(self, *_):
+        """
+        Starts the tinyproxy service (requires polkit/pkexec authentication).
+        """
         self._action_status.set_text("Starting tinyproxy (requires polkit auth)…")
         CommandRunner.run_shell(
             "systemctl start tinyproxy",
@@ -180,6 +195,9 @@ class ProxyTab(Gtk.Box):
         )
 
     def _stop_proxy(self, *_):
+        """
+        Stops the tinyproxy service (requires polkit/pkexec authentication).
+        """
         self._action_status.set_text("Stopping tinyproxy…")
         CommandRunner.run_shell(
             "systemctl stop tinyproxy",
@@ -189,6 +207,9 @@ class ProxyTab(Gtk.Box):
         )
 
     def _load_blocklist(self, *_):
+        """
+        Reads the filter blocklist file in Python directly and updates the text editor buffer.
+        """
         # B-01 FIX: Read the filter file directly in Python — no shell involvement
         import os
         try:
@@ -202,6 +223,9 @@ class ProxyTab(Gtk.Box):
         self._bl_buf.set_text(content)
 
     def _save_blocklist(self, *_):
+        """
+        Saves the blocklist text buffer back to the system filter file (requires polkit auth).
+        """
         start = self._bl_buf.get_start_iter()
         end   = self._bl_buf.get_end_iter()
         content = self._bl_buf.get_text(start, end, True)
@@ -223,6 +247,9 @@ class ProxyTab(Gtk.Box):
         threading.Thread(target=_write, daemon=True).start()
 
     def _quick_add(self, *_):
+        """
+        Validates and appends a single domain to the system filter file, restarting tinyproxy.
+        """
         domain = self._quick_entry.get_text().strip()
         if not domain:
             return
@@ -262,6 +289,10 @@ class ProxyTab(Gtk.Box):
         self._quick_entry.set_text("")
 
     def _auto_update(self, *_):
+        """
+        Downloads Steven Black's hosts file from GitHub, parses and validates domains,
+        updates the tinyproxy blocklist filter file, and restarts tinyproxy.
+        """
         self._action_status.set_text("Downloading Steven Black hosts list…")
 
         # B-04: Maximum download size (50 MB) to prevent DoS via huge response
@@ -317,6 +348,9 @@ class ProxyTab(Gtk.Box):
         threading.Thread(target=_worker, daemon=True).start()
 
     def _tail_log(self, *_):
+        """
+        Reads and prints the last 50 lines of the tinyproxy log file.
+        """
         self._log_buf.set_text("Loading log…")
         CommandRunner.run_shell(
             f"tail -n 50 {LOG_FILE} 2>/dev/null || echo 'Log file not found: {LOG_FILE}'",

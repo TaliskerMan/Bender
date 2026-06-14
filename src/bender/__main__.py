@@ -8,5 +8,10 @@
 # Bender is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
 
+"""
+Package entry point for executing the Bender Dashboard application.
+Can be run directly via `python3 -m bender`.
+"""
+
 from .main import main
 main()

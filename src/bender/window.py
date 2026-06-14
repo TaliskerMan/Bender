@@ -18,9 +18,20 @@ from .tab_about import AboutTab
 
 
 class BenderWindow(Adw.ApplicationWindow):
-    """BenderWindow implementation."""
+    """
+    The main application window for the Bender Dashboard.
+    
+    Constructs the primary UI layout, including the sidebar navigator, 
+    the dynamic page stack (tabs for system, security, network, etc.),
+    and the top header bar with style theme controls.
+    """
     def __init__(self, app):
-        """__init__ implementation."""
+        """
+        Initializes the BenderWindow layout.
+        
+        Args:
+            app (Adw.Application): The parent Libadwaita application instance.
+        """
         super().__init__(application=app, title="Bender")
         self.set_default_size(960, 700)
 
@@ -119,4 +130,10 @@ class BenderWindow(Adw.ApplicationWindow):
     # ── Handlers ───────────────────────────────────────────────────────────────
 
     def _set_theme(self, scheme):
+        """
+        Updates the application style scheme (system, light, or dark mode).
+        
+        Args:
+            scheme (Adw.ColorScheme): The selected Libadwaita color scheme.
+        """
         Adw.StyleManager.get_default().set_color_scheme(scheme)

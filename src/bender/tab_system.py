@@ -38,9 +38,16 @@ def _mono_view(text: str = "") -> tuple:
 
 
 class SystemTab(Gtk.Box):
-    """SystemTab implementation."""
+    """
+    SystemTab constructs a comprehensive system overview display, listing hostname details,
+    disk storage availability, memory usage, system load/uptime, active display devices,
+    and a top process monitor.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the system telemetry panel, builds output scrollable text buffers,
+        sets up auto-refresh callbacks, and triggers the initial telemetry gathering.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         scroll = Gtk.ScrolledWindow(vexpand=True)
@@ -100,6 +107,10 @@ class SystemTab(Gtk.Box):
     # ── Data loaders ──────────────────────────────────────────────────────────
 
     def _refresh_all(self, *_):
+        """
+        Launches asynchronous system shell queries to inspect hostnamectl, df, free,
+        uptime, xrandr, and ps statistics.
+        """
         CommandRunner.run_shell("hostnamectl", self._on_sysinfo)
         CommandRunner.run_shell("df -hlT -x tmpfs -x devtmpfs", self._on_disk)
         CommandRunner.run_shell("free -h --mega", self._on_mem)
@@ -114,23 +125,44 @@ class SystemTab(Gtk.Box):
         )
 
     def _auto_refresh(self):
+        """
+        Periodically triggers refresh_all (returns True to preserve GLib timer repetition).
+        """
         self._refresh_all()
         return True  # keep repeating
 
     def _on_sysinfo(self, out, err, rc):
+        """
+        Updates the hostnamectl system info terminal text buffer.
+        """
         self._sysinfo_buf.set_text(out or err or "No data")
 
     def _on_disk(self, out, err, rc):
+        """
+        Updates the disk usage terminal text buffer.
+        """
         self._disk_buf.set_text(out or err or "No data")
 
     def _on_mem(self, out, err, rc):
+        """
+        Updates the memory usage terminal text buffer.
+        """
         self._mem_buf.set_text(out or err or "No data")
 
     def _on_uptime(self, out, err, rc):
+        """
+        Updates the uptime & system load terminal text buffer.
+        """
         self._uptime_buf.set_text(out or err or "No data")
 
     def _on_displays(self, out, err, rc):
+        """
+        Updates the connected display terminal text buffer.
+        """
         self._disp_buf.set_text(out or err or "No displays detected")
 
     def _on_procs(self, out, err, rc):
+        """
+        Updates the top process list terminal text buffer.
+        """
         self._proc_buf.set_text(out or err or "No data")

@@ -91,8 +91,19 @@ ACTIONS = [
 
 
 class _ActionRow(Adw.ActionRow):
+    """
+    A preferences row representing a single system maintenance command task.
+    Includes a label, short explanation description, icon, run button, and loading spinner.
+    """
     def __init__(self, action: dict, output_buf):
-        """__init__ implementation."""
+        """
+        Initializes the maintenance row widget.
+        
+        Args:
+            action (dict): Dictionary specifying the command label, subtitle, icon, command,
+                           privilege levels (sudo flag), and parameter types.
+            output_buf (Gtk.TextBuffer): Reference to the global stdout logging text buffer.
+        """
         super().__init__(
             title=action["label"],
             subtitle=action["subtitle"],
@@ -112,6 +123,10 @@ class _ActionRow(Adw.ActionRow):
         self.add_suffix(self._spinner)
 
     def _run(self, _btn):
+        """
+        Triggers execution of the maintenance task in a daemon background thread.
+        Sets button sensitivity to false and starts the spinner during execution.
+        """
         self._btn.set_sensitive(False)
         self._spinner.start()
 
@@ -132,6 +147,11 @@ class _ActionRow(Adw.ActionRow):
             CommandRunner.run_shell(action["cmd"], self._on_done)
 
     def _on_done(self, out, err, rc):
+        """
+        Callback handler triggered when the background command completes.
+        Re-enables the run button, stops the spinner, and writes command results 
+        (stdout/stderr) to the global console log buffer.
+        """
         self._btn.set_sensitive(True)
         self._spinner.stop()
 
@@ -141,9 +161,15 @@ class _ActionRow(Adw.ActionRow):
 
 
 class MaintenanceTab(Gtk.Box):
-    """MaintenanceTab implementation."""
+    """
+    MaintenanceTab aggregates multiple system update, cache cleaning, Gnome resets,
+    and log deletion tasks into a simple, unified preferences panel.
+    """
     def __init__(self):
-        """__init__ implementation."""
+        """
+        Initializes the maintenance panel, setting up preferences groups, rows,
+        and the global scrollable text terminal output.
+        """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         scroll = Gtk.ScrolledWindow(vexpand=True)
@@ -192,4 +218,7 @@ class MaintenanceTab(Gtk.Box):
             group.add(row)
 
     def _clear_terminal(self, _btn):
+        """
+        Clears all text content from the global terminal console output.
+        """
         self._console_buf.set_text("")
