@@ -14,6 +14,7 @@ from .tab_connections import ActiveConnectionsTab
 from .tab_maintenance import MaintenanceTab
 from .tab_weather import WeatherTab
 from .tab_proxy import ProxyTab
+from .tab_about import AboutTab
 
 
 class BenderWindow(Adw.ApplicationWindow):
@@ -81,10 +82,6 @@ class BenderWindow(Adw.ApplicationWindow):
         theme_section.append("Dark Mode",    "win.theme-dark")
         menu.append_section("Appearance", theme_section)
 
-        about_section = Gio.Menu()
-        about_section.append("About Bender", "win.about")
-        menu.append_section(None, about_section)
-
         menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic")
         menu_btn.set_menu_model(menu)
         header.pack_end(menu_btn)
@@ -101,10 +98,6 @@ class BenderWindow(Adw.ApplicationWindow):
             action.connect("activate", lambda _a, _p, s=scheme: self._set_theme(s))
             self.add_action(action)
 
-        about_action = Gio.SimpleAction.new("about", None)
-        about_action.connect("activate", self._on_about)
-        self.add_action(about_action)
-
         # ── ViewStack pages ───────────────────────────────────────────────────
         pages = [
             ("system",      "computer-symbolic",         "System",      SystemTab()),
@@ -114,6 +107,7 @@ class BenderWindow(Adw.ApplicationWindow):
             ("maintenance", "emblem-system-symbolic",    "Maintenance", MaintenanceTab()),
             ("weather",     "weather-clear-symbolic",    "Weather",     WeatherTab()),
             ("proxy",       "network-vpn-symbolic",      "Proxy",       ProxyTab()),
+            ("about",       "help-about-symbolic",       "About",       AboutTab()),
         ]
         for name, icon, title, widget in pages:
             page = self.stack.add_titled(widget, name, title)
@@ -126,33 +120,3 @@ class BenderWindow(Adw.ApplicationWindow):
 
     def _set_theme(self, scheme):
         Adw.StyleManager.get_default().set_color_scheme(scheme)
-
-    def _on_about(self, _action, _param):
-        try:
-            version = importlib.metadata.version('bender')
-        except importlib.metadata.PackageNotFoundError:
-            version = "dev"
-
-        about = Adw.AboutWindow(
-            transient_for=self,
-            application_name="Bender",
-            application_icon="com.taliskerman.bender",
-            developer_name="Chuck Talk",
-            version=version,
-            comments="Linux workstation dashboard — Bite my shiny metal app!",
-            website="https://github.com/TaliskerMan/Bender",
-            copyright="Copyright Chuck Talk, a Nordheim Online Product",
-            license_type=Gtk.License.CUSTOM,
-        )
-        try:
-            license_path = os.path.join(os.path.dirname(__file__), '../../LICENSE')
-            if not os.path.exists(license_path):
-                license_path = '/usr/share/bender/LICENSE'
-            with open(license_path, 'r', encoding='utf-8') as f:
-                license_text = f.read()
-        except Exception:
-            license_text = "GNU General Public License v3.0\nSee https://www.gnu.org/licenses/gpl-3.0.html"
-
-        about.set_license(license_text)
-
-        about.present()

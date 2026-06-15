@@ -1,6 +1,12 @@
-bender (0.1.5-1) unstable; urgency=medium
+bender (0.1.7-1) UNRELEASED; urgency=medium
 
-  * Release 0.1.5-1 with logo and legal fixes
+  * Bump version for new release
+
+ -- Chuck Talk <chuck@nordheim.online>  Wed, 10 Jun 2026 08:14:37 -0500
+
+bender (0.1.7-1) unstable; urgency=medium
+
+  * Release 0.1.7-1 with logo and legal fixes
 
  -- Chuck Talk <chuck@nordheim.online>  Wed, 10 Jun 2026 12:52:16 +0000
 
