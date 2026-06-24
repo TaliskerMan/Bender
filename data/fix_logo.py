@@ -25,5 +25,7 @@ def fix(inf, outf):
         img.save(outf)
         print("Saved", outf, "with size", img.size)
 
-fix("/home/freecode/antigrav/Bender/data/noln.png", "/home/freecode/antigrav/Bender/data/noln_ui.png")
-fix("/home/freecode/antigrav/Bender/data/noln_dark.png", "/home/freecode/antigrav/Bender/data/noln_dark_ui.png")
+import os
+base = os.path.dirname(os.path.abspath(__file__))
+fix(os.path.join(base, "noln.png"), os.path.join(base, "noln_ui.png"))
+fix(os.path.join(base, "noln_dark.png"), os.path.join(base, "noln_dark_ui.png"))

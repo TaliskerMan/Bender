@@ -11,10 +11,19 @@ venv/
 
 # Build artifacts (keep directory, ignore package files)
 artifacts/*.deb
+artifacts/*.deb.*
 artifacts/*.changes
 artifacts/*.buildinfo
 artifacts/*.dsc
 artifacts/*.tar.*
+
+# Generated Debian build tree (dpkg-buildpackage output)
+debian/bender/
+debian/.debhelper/
+debian/.pybuild/
+debian/files
+debian/*.substvars
+debian/*.debhelper.log
 
 # IDE / editor
 .idea/

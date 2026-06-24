@@ -1,12 +1,12 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Weather Tab
 # Fetches weather by wrapping the ansiweather CLI utility.
@@ -16,7 +16,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 from .runner import CommandRunner
-import re
+from .validators import is_valid_city
 
 class WeatherTab(Gtk.Box):
     """
@@ -106,7 +106,7 @@ class WeatherTab(Gtk.Box):
         if not city:
             return
             
-        if not re.match(r"^[a-zA-Z0-9.,_ ]+$", city):
+        if not is_valid_city(city):
             self._status_lbl.set_text("Invalid location format.")
             self._buf.set_text("Only alphanumeric characters and commas are allowed in locations.")
             return

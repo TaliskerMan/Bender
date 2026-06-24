@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install lint/test tools
+        run: python -m pip install --upgrade pip ruff pytest
+      - name: Lint
+        run: ruff check src tests
+      - name: Test (validators + runner invariants)
+        run: PYTHONPATH=src python -m pytest tests -q
+
+  build-deb:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Debian build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y devscripts debhelper dh-python python3-all \
+            pybuild-plugin-pyproject python3-gi gir1.2-gtk-4.0 gir1.2-adw-1
+      - name: Build .deb
+        run: dpkg-buildpackage -us -uc -b
+      - name: Collect artifacts
+        run: |
+          mkdir -p out
+          cp ../bender_*_all.deb out/ || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bender-deb
+          path: out/*.deb

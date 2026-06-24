@@ -1,12 +1,12 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Network Monitor Tab
 # Active connections, port checker, DNS lookup, whois, DNS flush, connection counts.
@@ -16,8 +16,8 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw  # B-06: removed duplicate import
 from .runner import CommandRunner
+from .validators import is_valid_domain
 import shlex
-import re
 
 
 def _tool_row(label: str, placeholder: str, btn_label: str, on_clicked) -> tuple:
@@ -178,7 +178,7 @@ class NetworkTab(Gtk.Box):
             self._dns_buf.set_text("Enter a domain name first.")
             return
 
-        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+        if not is_valid_domain(domain):
             self._dns_buf.set_text("Invalid domain format detected.")
             return
 
@@ -199,7 +199,7 @@ class NetworkTab(Gtk.Box):
             self._whois_buf.set_text("Enter a domain name first.")
             return
 
-        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+        if not is_valid_domain(domain):
             self._whois_buf.set_text("Invalid domain format detected.")
             return
 
@@ -218,9 +218,12 @@ class NetworkTab(Gtk.Box):
         Flushes the DNS cache via resolvectl (requires polkit/pkexec authentication).
         """
         self._flush_buf.set_text("Flushing DNS cache (requires polkit auth)…")
-        CommandRunner.run_shell(
-            "resolvectl flush-caches && echo 'DNS cache flushed successfully.'",
-            lambda o, e, r: self._flush_buf.set_text(o or e or "Failed"),
+        # List form (no shell). The previous "&& echo success" lived in the shell
+        # string; with list-form we report success from the callback instead.
+        CommandRunner.run(
+            ["resolvectl", "flush-caches"],
+            lambda o, e, r: self._flush_buf.set_text(
+                "DNS cache flushed successfully." if r == 0 else (e or "Failed")),
             use_sudo=True
         )
 

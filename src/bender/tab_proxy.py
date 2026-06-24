@@ -1,12 +1,12 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Proxy Manager Tab
 # Manages tinyproxy: start/stop, blocklist management, live logs, auto-update.
@@ -15,13 +15,13 @@ import threading
 import subprocess
 import shutil
 import shlex
-import re
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw, GLib
 from .runner import CommandRunner
+from .validators import is_valid_domain, parse_hosts_blocklist
 
 
 FILTER_FILE = "/etc/tinyproxy/filter"
@@ -187,8 +187,8 @@ class ProxyTab(Gtk.Box):
         Starts the tinyproxy service (requires polkit/pkexec authentication).
         """
         self._action_status.set_text("Starting tinyproxy (requires polkit auth)…")
-        CommandRunner.run_shell(
-            "systemctl start tinyproxy",
+        CommandRunner.run(
+            ["systemctl", "start", "tinyproxy"],
             lambda o, e, r: (self._action_status.set_text("Started." if r == 0 else f"Error: {e}"),
                               self._refresh_status()),
             use_sudo=True
@@ -199,8 +199,8 @@ class ProxyTab(Gtk.Box):
         Stops the tinyproxy service (requires polkit/pkexec authentication).
         """
         self._action_status.set_text("Stopping tinyproxy…")
-        CommandRunner.run_shell(
-            "systemctl stop tinyproxy",
+        CommandRunner.run(
+            ["systemctl", "stop", "tinyproxy"],
             lambda o, e, r: (self._action_status.set_text("Stopped." if r == 0 else f"Error: {e}"),
                               self._refresh_status()),
             use_sudo=True
@@ -254,7 +254,7 @@ class ProxyTab(Gtk.Box):
         if not domain:
             return
 
-        if not re.match(r"^[a-zA-Z0-9.-]+$", domain):
+        if not is_valid_domain(domain):
             self._action_status.set_text("Invalid domain format.")
             return
 
@@ -297,8 +297,6 @@ class ProxyTab(Gtk.Box):
 
         # B-04: Maximum download size (50 MB) to prevent DoS via huge response
         MAX_BYTES = 50 * 1024 * 1024
-        # Domain regex for per-entry validation before writing
-        _DOMAIN_RE = re.compile(r"^[a-zA-Z0-9.-]+$")
 
         def _worker():
             try:
@@ -317,17 +315,8 @@ class ProxyTab(Gtk.Box):
 
                 raw = raw_bytes.decode('utf-8', errors='replace')
 
-                # Extract and validate each domain before including it
-                domains = []
-                for line in raw.splitlines():
-                    parts = line.split()
-                    if (
-                        line.startswith("0.0.0.0")
-                        and len(parts) >= 2
-                        and parts[1] not in ("0.0.0.0", "localhost", "localhost.localdomain")
-                        and _DOMAIN_RE.match(parts[1])  # B-04: per-domain validation
-                    ):
-                        domains.append(parts[1])
+                # Extract and validate each domain (see validators.parse_hosts_blocklist).
+                domains = parse_hosts_blocklist(raw)
 
                 content = "\n".join(domains) + "\n"
                 proc = subprocess.run(  # nosec B603 — list-form
@@ -352,7 +341,9 @@ class ProxyTab(Gtk.Box):
         Reads and prints the last 50 lines of the tinyproxy log file.
         """
         self._log_buf.set_text("Loading log…")
+        # Static literal (no f-string) — enforced by test_runner_invariants.py.
         CommandRunner.run_shell(
-            f"tail -n 50 {LOG_FILE} 2>/dev/null || echo 'Log file not found: {LOG_FILE}'",
+            "tail -n 50 /var/log/tinyproxy/tinyproxy.log 2>/dev/null "
+            "|| echo 'Log file not found: /var/log/tinyproxy/tinyproxy.log'",
             lambda o, e, r: self._log_buf.set_text(o or e or "(empty log)")
         )

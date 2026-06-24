@@ -2,6 +2,40 @@
 
 All notable changes to the Bender project are documented in this file. This project adheres to Semantic Versioning.
 
+> Tagging note: earlier tags mixed `vX.Y.Z` and `vX.Y.Z-N` styles. Going forward,
+> use clean SemVer tags (`v0.1.9`) cut from the released commit.
+
+---
+
+## [0.1.9] - 2026-06-22
+
+### Fixed
+- **Four privileged actions no longer crash.** Start Proxy, Stop Proxy, Hidden
+  Processes (unhide), and DNS Flush called `run_shell(..., use_sudo=True)`, which
+  raises `ValueError`. They now use list-form `CommandRunner.run([...],
+  use_sudo=True)`; shell-only fallbacks (the unhide `|| echo`, the DNS `&& echo`)
+  moved into Python callbacks.
+
+### Added
+- **Tests + enforced invariants.** A `pytest` suite covering the input validators
+  and the Steven Black hosts parser, plus AST-based tests that fail the build if
+  any `run_shell` call passes `use_sudo=True` or builds its command string with an
+  f-string/concatenation/`.format()`.
+
+### Changed
+- **Licensing normalized to GPLv3** and contact to `chuck@nordheim.online` across
+  all source headers, `SECURITY.md`, and the About tab (previously 9 files said
+  AGPLv3 / used the gmail address).
+- **Dependencies/packaging:** removed the unused `defusedxml`; declared the
+  optional runtime tools (`dnsutils`, `whois`, `unhide`, `flatpak`, `tinyproxy`,
+  `ansiweather`) in `Recommends` and `nala` in `Suggests`.
+- **Versioning single-sourced** to `pyproject.toml`; `build_release.sh` no longer
+  references a hardcoded author path and verifies the Debian version matches.
+
+## [0.1.5–0.1.8]
+- Interim packaging/build iterations (logo and legal fixes, version bumps). These
+  were built but not individually documented; folded into the 0.1.9 reconciliation.
+
 ---
 
 ## [0.1.4] - 2026-05-28

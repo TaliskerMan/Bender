@@ -1,14 +1,24 @@
 #!/bin/bash
-
-# Auto-increment version/build number
-python3 "/home/freecode/antigrav/workflow-tools/increment_build.py" "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # build_release.sh — Automated build, sign, and hash script for Bender
+#
+# SINGLE SOURCE OF TRUTH: pyproject.toml `version` is the upstream version.
+# debian/changelog must carry the same upstream version with a `-N` Debian
+# revision (e.g. pyproject 0.1.9 -> debian 0.1.9-1). This script reads the
+# Debian version from debian/changelog and verifies it matches pyproject; it no
+# longer calls an author-specific increment script.
 set -e
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Configuration
 PACKAGE_NAME="bender"
 VERSION=$(head -1 debian/changelog | grep -oP '(?<=^bender \().*?(?=\))')
+PYPROJECT_VERSION=$(grep -oP '(?<=^version = ")[^"]+' pyproject.toml)
+if [ "${VERSION%%-*}" != "$PYPROJECT_VERSION" ]; then
+    echo "ERROR: version mismatch — debian/changelog=${VERSION} vs pyproject=${PYPROJECT_VERSION}." >&2
+    echo "Update them to agree (pyproject is the source of truth) before building." >&2
+    exit 1
+fi
 GPG_EMAIL="chuck@nordheim.online"
 BUILD_DIR="artifacts"
 

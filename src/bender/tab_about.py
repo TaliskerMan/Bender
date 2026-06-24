@@ -8,7 +8,7 @@ from gi.repository import Gtk
 class AboutTab(Gtk.Box):
     """
     AboutTab displays product identity, developer attribution,
-    and the GNU GPL/AGPL license text.
+    and the GNU GPL v3 license text.
     """
     def __init__(self):
         """

@@ -1,12 +1,12 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Maintenance Tab
 # System update, Flatpak update, clear shared memory, clean logs, GNOME reset, temp cleanup.
@@ -86,6 +86,8 @@ ACTIONS = [
         "cmd":      "gsettings reset org.gnome.shell app-picker-layout && sleep 1 && gnome-session-quit --no-prompt",
         "sudo":     False,
         "use_list": False,
+        "confirm":  "This ends your GNOME session immediately to apply the reset. "
+                    "Any unsaved work in open applications will be lost. Continue?",
     },
 ]
 
@@ -124,9 +126,31 @@ class _ActionRow(Adw.ActionRow):
 
     def _run(self, _btn):
         """
-        Triggers execution of the maintenance task in a daemon background thread.
-        Sets button sensitivity to false and starts the spinner during execution.
+        Triggers the maintenance task, first asking for confirmation if the action
+        is disruptive (e.g. one that ends the GNOME session).
         """
+        confirm = self._action.get("confirm")
+        if confirm:
+            root = self.get_root()
+            dialog = Adw.MessageDialog(
+                transient_for=root if isinstance(root, Gtk.Window) else None,
+                heading=self._action["label"],
+                body=confirm,
+            )
+            dialog.add_response("cancel", "Cancel")
+            dialog.add_response("proceed", "Continue")
+            dialog.set_response_appearance("proceed", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.connect(
+                "response",
+                lambda _d, resp: self._execute() if resp == "proceed" else None,
+            )
+            dialog.present()
+            return
+        self._execute()
+
+    def _execute(self):
+        """Runs the maintenance task in a daemon background thread."""
         self._btn.set_sensitive(False)
         self._spinner.start()
 

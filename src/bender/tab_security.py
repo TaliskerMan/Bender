@@ -1,12 +1,12 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Security Audit Tab
 # Runs security checks drawn from Menul8.sh, eff0.sh, badperms.sh, lastchk.sh, killz.sh, sxid.sh
@@ -74,7 +74,11 @@ CHECKS = [
         "id":    "hidden",
         "label": "Hidden Processes (unhide)",
         "icon":  "find-location-symbolic",
-        "cmd":   "unhide procall 2>/dev/null || echo 'unhide not installed — run: sudo apt install unhide'",
+        # Privileged: runs via list-form run() with pkexec. List-form has no
+        # shell, so the "not installed" fallback is handled in Python (see
+        # `requires`) rather than a shell `|| echo`.
+        "cmd_list": ["unhide", "procall"],
+        "requires": "unhide",
         "sudo":  True,
     },
 ]
@@ -131,8 +135,17 @@ class _CheckRow(Gtk.Box):
         end_iter = self._buf.get_end_iter()
         self._buf.insert(end_iter, f"\n--- Security Check: {self._check['label']} ---\nRunning...\n")
         
-        CommandRunner.run_shell(self._check["cmd"], self._on_done,
-                                use_sudo=self._check["sudo"])
+        if self._check.get("sudo"):
+            # Privileged checks MUST use list-form run() — run_shell() rejects
+            # use_sudo=True. Handle the optional-tool fallback in Python.
+            required = self._check.get("requires")
+            if required and not CommandRunner.command_exists(required):
+                self._on_done(
+                    "", f"{required} not installed — run: sudo apt install {required}", 127)
+                return
+            CommandRunner.run(self._check["cmd_list"], self._on_done, use_sudo=True)
+        else:
+            CommandRunner.run_shell(self._check["cmd"], self._on_done, use_sudo=False)
 
     def _on_done(self, out, err, rc):
         """

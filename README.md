@@ -32,7 +32,7 @@ bash run.sh
 ## Install from .deb
 
 ```bash
-sudo dpkg -i artifacts/bender_0.1.0-1_all.deb
+sudo dpkg -i artifacts/bender_*_all.deb
 ```
 
 ## Build the .deb Package
