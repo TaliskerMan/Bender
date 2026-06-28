@@ -1,3 +1,10 @@
+bender (0.1.10-1) unstable; urgency=medium
+
+  * Auto-increment build version to 0.1.10-1.
+  * Added PEP 257 docstrings and user documentation.
+
+ -- Chuck Talk <chuck@nordheim.online>  Sun, 28 Jun 2026 08:20:00 -0500
+
 bender (0.1.9-1) unstable; urgency=medium
 
   * Fix four privileged actions that crashed with ValueError (Start/Stop Proxy,
