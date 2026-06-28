@@ -1,8 +1,9 @@
-bender (0.1.7-1) UNRELEASED; urgency=medium
+bender (0.1.10-1) unstable; urgency=medium
 
-  * Bump version for new release
+  * Auto-increment build version to 0.1.10-1.
+  * Added PEP 257 docstrings and user documentation.
 
- -- Chuck Talk <chuck@nordheim.online>  Wed, 10 Jun 2026 08:14:37 -0500
+ -- Chuck Talk <chuck@nordheim.online>  Sun, 28 Jun 2026 08:20:00 -0500
 
 bender (0.1.7-1) unstable; urgency=medium
 
