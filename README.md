@@ -23,24 +23,37 @@ python3-gi  gir1.2-gtk-4.0  gir1.2-adw-1  policykit-1  hicolor-icon-theme
 
 ## Run from Source
 
+To run Bender directly from the source without installing:
+
 ```bash
 git clone https://github.com/TaliskerMan/Bender.git
 cd Bender
 bash run.sh
 ```
 
-## Install from .deb
+## Install from Release
+
+Download the `.deb` package from the [Releases](https://github.com/TaliskerMan/Bender/releases) page and install:
 
 ```bash
-sudo dpkg -i artifacts/bender_*_all.deb
+sudo dpkg -i bender_*_all.deb
 ```
 
-## Build the .deb Package
+## Build from Source Tarball / Repository
+
+To build the Debian package and sign it:
 
 ```bash
+# If using the source tarball, extract it first:
+# tar -xzvf bender_source.tar.gz
 cd Bender
-dpkg-buildpackage -us -uc -b
+bash build_release.sh
 ```
+This will place the `.deb` file and its signed hashes into the `artifacts/` folder.
+
+## Documentation
+
+For comprehensive instructions on how to use Bender, see the [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Author
 
