@@ -37,11 +37,11 @@ def _iter_run_shell_calls():
 def test_no_run_shell_uses_sudo():
     offenders = []
     for path, node in _iter_run_shell_calls():
-        for kw in node.keywords:
+        for keyword_arg in node.keywords:
             if (
-                kw.arg == "use_sudo"
-                and isinstance(kw.value, ast.Constant)
-                and kw.value.value is True
+                keyword_arg.arg == "use_sudo"
+                and isinstance(keyword_arg.value, ast.Constant)
+                and keyword_arg.value.value is True
             ):
                 offenders.append(f"{os.path.basename(path)}:{node.lineno}")
     assert not offenders, (
@@ -56,12 +56,12 @@ def test_run_shell_first_arg_is_not_dynamically_built():
     for path, node in _iter_run_shell_calls():
         if not node.args:
             continue
-        arg0 = node.args[0]
-        if isinstance(arg0, ast.JoinedStr):
+        first_arg = node.args[0]
+        if isinstance(first_arg, ast.JoinedStr):
             offenders.append(f"{os.path.basename(path)}:{node.lineno} (f-string)")
-        elif isinstance(arg0, ast.BinOp):
+        elif isinstance(first_arg, ast.BinOp):
             offenders.append(f"{os.path.basename(path)}:{node.lineno} (concatenation)")
-        elif isinstance(arg0, ast.Call) and _callee_name(arg0.func) == "format":
+        elif isinstance(first_arg, ast.Call) and _callee_name(first_arg.func) == "format":
             offenders.append(f"{os.path.basename(path)}:{node.lineno} (.format())")
     assert not offenders, (
         "run_shell()'s command string must be a static literal — never an "

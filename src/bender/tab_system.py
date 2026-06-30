@@ -131,38 +131,38 @@ class SystemTab(Gtk.Box):
         self._refresh_all()
         return True  # keep repeating
 
-    def _on_sysinfo(self, out, err, rc):
+    def _on_sysinfo(self, stdout_text, stderr_text, return_code):
         """
         Updates the hostnamectl system info terminal text buffer.
         """
-        self._sysinfo_buf.set_text(out or err or "No data")
+        self._sysinfo_buf.set_text(stdout_text or stderr_text or "No data")
 
-    def _on_disk(self, out, err, rc):
+    def _on_disk(self, stdout_text, stderr_text, return_code):
         """
         Updates the disk usage terminal text buffer.
         """
-        self._disk_buf.set_text(out or err or "No data")
+        self._disk_buf.set_text(stdout_text or stderr_text or "No data")
 
-    def _on_mem(self, out, err, rc):
+    def _on_mem(self, stdout_text, stderr_text, return_code):
         """
         Updates the memory usage terminal text buffer.
         """
-        self._mem_buf.set_text(out or err or "No data")
+        self._mem_buf.set_text(stdout_text or stderr_text or "No data")
 
-    def _on_uptime(self, out, err, rc):
+    def _on_uptime(self, stdout_text, stderr_text, return_code):
         """
         Updates the uptime & system load terminal text buffer.
         """
-        self._uptime_buf.set_text(out or err or "No data")
+        self._uptime_buf.set_text(stdout_text or stderr_text or "No data")
 
-    def _on_displays(self, out, err, rc):
+    def _on_displays(self, stdout_text, stderr_text, return_code):
         """
         Updates the connected display terminal text buffer.
         """
-        self._disp_buf.set_text(out or err or "No displays detected")
+        self._disp_buf.set_text(stdout_text or stderr_text or "No displays detected")
 
-    def _on_procs(self, out, err, rc):
+    def _on_procs(self, stdout_text, stderr_text, return_code):
         """
         Updates the top process list terminal text buffer.
         """
-        self._proc_buf.set_text(out or err or "No data")
+        self._proc_buf.set_text(stdout_text or stderr_text or "No data")

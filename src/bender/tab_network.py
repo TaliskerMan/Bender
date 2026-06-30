@@ -31,9 +31,9 @@ def _tool_row(label: str, placeholder: str, btn_label: str, on_clicked) -> tuple
     entry = Gtk.Entry(placeholder_text=placeholder, hexpand=True)
     box.append(entry)
 
-    btn = Gtk.Button(label=btn_label)
-    btn.connect("clicked", on_clicked)
-    box.append(btn)
+    button = Gtk.Button(label=btn_label)
+    button.connect("clicked", on_clicked)
+    box.append(button)
 
     return box, entry
 
@@ -56,7 +56,7 @@ class NetworkTab(Gtk.Box):
     """
     def __init__(self):
         """
-        Initializes the NetworkTab widget and lays out the various sub-panels.
+        Initializes the NetworkTab widget and lays stdout_text the various sub-panels.
         """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
@@ -149,7 +149,7 @@ class NetworkTab(Gtk.Box):
 
 
 
-    def _check_port(self, _btn):
+    def _check_port(self, _button):
         """
         Checks if a TCP port is open locally by running lsof on the system.
         Performs basic numeric validation before running command runner.
@@ -163,12 +163,12 @@ class NetworkTab(Gtk.Box):
         # B-01 FIX: list-form — port is never interpreted by a shell
         CommandRunner.run(
             ["lsof", f"-iTCP:{port}", "-sTCP:LISTEN", "-n", "-P"],
-            lambda o, e, r: self._port_buf.set_text(
-                o or f"No process listening on port {port}" if r != 0 else o or "No data"
+            lambda stdout, stderr, return_code: self._port_buf.set_text(
+                stdout or f"No process listening on port {port}" if return_code != 0 else stdout or "No data"
             )
         )
 
-    def _do_dig(self, _btn):
+    def _do_dig(self, _):
         """
         Runs a standard DNS lookup (dig) for the entered domain.
         Uses regex checks to ensure domain parameters do not contain shell injection syntax.
@@ -186,10 +186,10 @@ class NetworkTab(Gtk.Box):
         # B-01 FIX: list-form — domain is passed as a discrete argument, not shell-interpolated
         CommandRunner.run(
             ["dig", domain],
-            lambda o, e, r: self._dns_buf.set_text(o or e or "dig not found")
+            lambda stdout, stderr, return_code: self._dns_buf.set_text(stdout or stderr or "dig not found")
         )
 
-    def _do_whois(self, _btn):
+    def _do_whois(self, _button):
         """
         Performs a WHOIS registry lookup on the specified domain name.
         Uses regex input validation and truncates output to 60 lines for legibility.
@@ -208,12 +208,12 @@ class NetworkTab(Gtk.Box):
         # Note: head -60 piping dropped in favour of truncating in the callback
         CommandRunner.run(
             ["whois", domain],
-            lambda o, e, r: self._whois_buf.set_text(
-                "\n".join((o or e or "whois not found").splitlines()[:60])
+            lambda stdout, stderr, return_code: self._whois_buf.set_text(
+                "\n".join((stdout or stderr or "whois not found").splitlines()[:60])
             )
         )
 
-    def _flush_dns(self, _btn):
+    def _flush_dns(self, _button):
         """
         Flushes the DNS cache via resolvectl (requires polkit/pkexec authentication).
         """
@@ -222,12 +222,12 @@ class NetworkTab(Gtk.Box):
         # string; with list-form we report success from the callback instead.
         CommandRunner.run(
             ["resolvectl", "flush-caches"],
-            lambda o, e, r: self._flush_buf.set_text(
-                "DNS cache flushed successfully." if r == 0 else (e or "Failed")),
+            lambda stdout, stderr, return_code: self._flush_buf.set_text(
+                "DNS cache flushed successfully." if return_code == 0 else (stderr or "Failed")),
             use_sudo=True
         )
 
-    def _scan_ddos(self, _btn):
+    def _scan_ddos(self, _button):
         """
         Runs connection statistics per IP (DDoS Indicator) by grouping active sockets.
         Pipes ss, awk, cut, sort, and uniq on system to print top connection sources.
@@ -235,5 +235,5 @@ class NetworkTab(Gtk.Box):
         self._ddos_buf.set_text("Scanning…")
         CommandRunner.run_shell(
             "ss -ntu 2>/dev/null | awk 'NR>1{print $6}' | cut -d: -f1 | sort | uniq -c | sort -rn | head -30",
-            lambda o, e, r: self._ddos_buf.set_text(o or "No active connections" if not e else e)
+            lambda stdout, stderr, return_code: self._ddos_buf.set_text(stdout or "No active connections" if not stderr else stderr)
         )

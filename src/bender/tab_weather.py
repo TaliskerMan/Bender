@@ -24,7 +24,7 @@ class WeatherTab(Gtk.Box):
     """
     def __init__(self):
         """
-        Initializes the weather panel, validating command availability, laying out 
+        Initializes the weather panel, validating command availability, laying stdout_text 
         inputs (city and unit selectors), and fetching the initial forecast.
         """
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -121,17 +121,17 @@ class WeatherTab(Gtk.Box):
         cmd = ["ansiweather", "-l", city, "-u", unit, "-s", "true", "-f", "7", "-d", "true", "-a", "false"]
         CommandRunner.run(cmd, self._on_done)
 
-    def _on_done(self, out, err, rc):
+    def _on_done(self, stdout_text, stderr_text, return_code):
         """
         Callback handler executed when the ansiweather command completes.
         Strips ANSI codes, parses multi-day forecast lists, and displays formatted results.
         """
-        if rc != 0:
+        if return_code != 0:
             self._status_lbl.set_text("Failed to fetch weather.")
-            self._buf.set_text(err or out or "Unknown error.")
+            self._buf.set_text(stderr_text or stdout_text or "Unknown error.")
             return
 
-        text = out.strip()
+        text = stdout_text.strip()
         # Clean up ANSI escape codes if any snuck through (though -a false should stop them)
         import re
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')

@@ -124,7 +124,7 @@ class _CheckRow(Gtk.Box):
         sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         self.append(sep)
 
-    def _run(self, _btn=None):
+    def _run(self, _button=None):
         """
         Runs the security check query in a background command thread, updating 
         the status badge and logging start markers.
@@ -147,19 +147,19 @@ class _CheckRow(Gtk.Box):
         else:
             CommandRunner.run_shell(self._check["cmd"], self._on_done, use_sudo=False)
 
-    def _on_done(self, out, err, rc):
+    def _on_done(self, stdout_text, stderr_text, return_code):
         """
         Callback handler executed when the security check shell script finishes.
         Updates status badges (success/warn/fail) and logs outputs to output console buffer.
         """
         self._run_btn.set_sensitive(True)
-        result = out or err or "(no output)"
+        result = stdout_text or stderr_text or "(no output)"
         
         end_iter = self._buf.get_end_iter()
         self._buf.insert(end_iter, f"{result}\n")
         
-        if rc == 0:
-            if not out.strip() or "No" in out or out.strip() == "":
+        if return_code == 0:
+            if not stdout_text.strip() or "No" in stdout_text or stdout_text.strip() == "":
                 self._badge.set_text("✅")
             else:
                 self._badge.set_text("⚠️")
@@ -237,13 +237,13 @@ class SecurityTab(Gtk.Box):
             checks_box.append(row)
             self._rows.append(row)
 
-    def _clear_terminal(self, _btn):
+    def _clear_terminal(self, _button):
         """
         Clears all text content from the security output console.
         """
         self._console_buf.set_text("")
 
-    def _run_all(self, _btn):
+    def _run_all(self, _button):
         """
         Sequentially runs all configured security check items.
         """

@@ -173,11 +173,11 @@ class ProxyTab(Gtk.Box):
             self._on_status
         )
 
-    def _on_status(self, out, err, rc):
+    def _on_status(self, stdout_text, stderr_text, return_code):
         """
         Callback updating the status indicator label depending on service state.
         """
-        if out.strip() == "active":
+        if stdout_text.strip() == "active":
             self._status_badge.set_text("🟢  Active")
         else:
             self._status_badge.set_text("🔴  Inactive")
@@ -189,7 +189,7 @@ class ProxyTab(Gtk.Box):
         self._action_status.set_text("Starting tinyproxy (requires polkit auth)…")
         CommandRunner.run(
             ["systemctl", "start", "tinyproxy"],
-            lambda o, e, r: (self._action_status.set_text("Started." if r == 0 else f"Error: {e}"),
+            lambda stdout, stderr, return_code: (self._action_status.set_text("Started." if return_code == 0 else f"Error: {stderr}"),
                               self._refresh_status()),
             use_sudo=True
         )
@@ -201,7 +201,7 @@ class ProxyTab(Gtk.Box):
         self._action_status.set_text("Stopping tinyproxy…")
         CommandRunner.run(
             ["systemctl", "stop", "tinyproxy"],
-            lambda o, e, r: (self._action_status.set_text("Stopped." if r == 0 else f"Error: {e}"),
+            lambda stdout, stderr, return_code: (self._action_status.set_text("Stopped." if return_code == 0 else f"Error: {stderr}"),
                               self._refresh_status()),
             use_sudo=True
         )
@@ -218,8 +218,8 @@ class ProxyTab(Gtk.Box):
                     content = fh.read()
             else:
                 content = '# Blocklist empty or file missing'
-        except OSError as e:
-            content = f'# Could not read blocklist: {e}'
+        except OSError as error:
+            content = f'# Could not read blocklist: {error}'
         self._bl_buf.set_text(content)
 
     def _save_blocklist(self, *_):
@@ -242,8 +242,8 @@ class ProxyTab(Gtk.Box):
                     self._action_status.set_text,
                     "Blocklist saved." if proc.returncode == 0 else f"Error: {proc.stderr}"
                 )
-            except Exception as e:
-                GLib.idle_add(self._action_status.set_text, f"Error: {e}")
+            except Exception as error:
+                GLib.idle_add(self._action_status.set_text, f"Error: {error}")
         threading.Thread(target=_write, daemon=True).start()
 
     def _quick_add(self, *_):
@@ -282,8 +282,8 @@ class ProxyTab(Gtk.Box):
                 else:
                     GLib.idle_add(self._action_status.set_text,
                                   f"Error: {proc.stderr}")
-            except Exception as e:
-                GLib.idle_add(self._action_status.set_text, f"Error: {e}")
+            except Exception as error:
+                GLib.idle_add(self._action_status.set_text, f"Error: {error}")
 
         threading.Thread(target=_append, daemon=True).start()
         self._quick_entry.set_text("")
@@ -332,8 +332,8 @@ class ProxyTab(Gtk.Box):
                     GLib.idle_add(self._load_blocklist)
                 else:
                     GLib.idle_add(self._action_status.set_text, f"Error saving: {proc.stderr}")
-            except Exception as e:
-                GLib.idle_add(self._action_status.set_text, f"Update failed: {e}")
+            except Exception as error:
+                GLib.idle_add(self._action_status.set_text, f"Update failed: {error}")
         threading.Thread(target=_worker, daemon=True).start()
 
     def _tail_log(self, *_):
@@ -345,5 +345,5 @@ class ProxyTab(Gtk.Box):
         CommandRunner.run_shell(
             "tail -n 50 /var/log/tinyproxy/tinyproxy.log 2>/dev/null "
             "|| echo 'Log file not found: /var/log/tinyproxy/tinyproxy.log'",
-            lambda o, e, r: self._log_buf.set_text(o or e or "(empty log)")
+            lambda stdout, stderr, return_code: self._log_buf.set_text(stdout or stderr or "(empty log)")
         )

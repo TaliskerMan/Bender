@@ -70,5 +70,5 @@ class ActiveConnectionsTab(Gtk.Box):
         self._buf.set_text("Scanning system connections...")
         CommandRunner.run_shell(
             "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null",
-            lambda o, e, r: self._buf.set_text(o or e or "No active connections detected.")
+            lambda stdout, stderr, return_code: self._buf.set_text(stdout or stderr or "No active connections detected.")
         )

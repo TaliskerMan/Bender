@@ -115,16 +115,16 @@ class _ActionRow(Adw.ActionRow):
         self._buf = output_buf
 
         # Run button as suffix
-        self._btn = Gtk.Button(label="Run", valign=Gtk.Align.CENTER)
-        self._btn.add_css_class("suggested-action")
-        self._btn.connect("clicked", self._run)
-        self.add_suffix(self._btn)
+        self._button = Gtk.Button(label="Run", valign=Gtk.Align.CENTER)
+        self._button.add_css_class("suggested-action")
+        self._button.connect("clicked", self._run)
+        self.add_suffix(self._button)
 
         # Spinner
         self._spinner = Gtk.Spinner(valign=Gtk.Align.CENTER)
         self.add_suffix(self._spinner)
 
-    def _run(self, _btn):
+    def _run(self, _button):
         """
         Triggers the maintenance task, first asking for confirmation if the action
         is disruptive (e.g. one that ends the GNOME session).
@@ -151,7 +151,7 @@ class _ActionRow(Adw.ActionRow):
 
     def _execute(self):
         """Runs the maintenance task in a daemon background thread."""
-        self._btn.set_sensitive(False)
+        self._button.set_sensitive(False)
         self._spinner.start()
 
         end_iter = self._buf.get_end_iter()
@@ -170,17 +170,17 @@ class _ActionRow(Adw.ActionRow):
         else:
             CommandRunner.run_shell(action["cmd"], self._on_done)
 
-    def _on_done(self, out, err, rc):
+    def _on_done(self, stdout_text, stderr_text, return_code):
         """
         Callback handler triggered when the background command completes.
         Re-enables the run button, stops the spinner, and writes command results 
         (stdout/stderr) to the global console log buffer.
         """
-        self._btn.set_sensitive(True)
+        self._button.set_sensitive(True)
         self._spinner.stop()
 
         end_iter = self._buf.get_end_iter()
-        result = out or err or "(no output)"
+        result = stdout_text or stderr_text or "(no output)"
         self._buf.insert(end_iter, f"{result}\n")
 
 
@@ -241,7 +241,7 @@ class MaintenanceTab(Gtk.Box):
             row = _ActionRow(action, self._console_buf)
             group.add(row)
 
-    def _clear_terminal(self, _btn):
+    def _clear_terminal(self, _button):
         """
         Clears all text content from the global terminal console output.
         """

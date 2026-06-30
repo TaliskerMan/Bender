@@ -69,19 +69,21 @@ class CommandRunner:
                 stdout = ""
                 stderr = "Command timed out after 60 seconds."
                 returncode = -1
-            except FileNotFoundError as e:
+            except FileNotFoundError as error:
+                # E.g. 'ip' or 'dig' isn't installed
                 stdout = ""
-                stderr = f"Command not found: {e}"
+                stderr = f"Command not found: {error}"
                 returncode = 127
-            except Exception as e:
+            except Exception as error:
+                # Catch unexpected permission, IO errors, etc.
                 stdout = ""
-                stderr = f"Unexpected error: {e}"
+                stderr = f"Unexpected error: {error}"
                 returncode = -1
 
             GLib.idle_add(callback, stdout, stderr, returncode)
 
-        t = threading.Thread(target=_worker, daemon=True)
-        t.start()
+        worker_thread = threading.Thread(target=_worker, daemon=True)
+        worker_thread.start()
 
     @staticmethod
     def run_shell(cmd_str: str, callback, use_sudo: bool = False):
