@@ -5,6 +5,21 @@ bender (0.1.10-1) unstable; urgency=medium
 
  -- Chuck Talk <chuck@nordheim.online>  Sun, 28 Jun 2026 08:20:00 -0500
 
+bender (0.1.9-1) unstable; urgency=medium
+
+  * Fix four privileged actions that crashed with ValueError (Start/Stop Proxy,
+    Hidden Processes, DNS Flush) by migrating them to list-form run(use_sudo=True).
+  * Add a pytest suite (validators, Steven Black parser) and AST-enforced
+    invariants (no run_shell(use_sudo=True); no dynamic run_shell strings).
+  * Normalize licensing to GPLv3 and contact to chuck@nordheim.online everywhere.
+  * Remove the unused defusedxml dependency.
+  * Declare runtime tools (dnsutils, whois, unhide, flatpak, tinyproxy,
+    ansiweather) in Recommends; nala in Suggests.
+  * Reconcile version sources (pyproject is the source of truth) and remove the
+    hardcoded author path from build_release.sh.
+
+ -- Chuck Talk <chuck@nordheim.online>  Mon, 22 Jun 2026 12:00:00 -0500
+
 bender (0.1.7-1) unstable; urgency=medium
 
   * Release 0.1.7-1 with logo and legal fixes

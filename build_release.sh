@@ -54,8 +54,30 @@ sha512sum "${PACKAGE_NAME}_${VERSION}_all.deb" > "${PACKAGE_NAME}_${VERSION}_all
 gpg --clearsign --default-key "$GPG_EMAIL" "${PACKAGE_NAME}_${VERSION}_all.deb.sha512"
 cd ..
 
+# Copy to NOBuilds directory
+echo "[4/4] Copying to NOBuilds directory..."
+NOBUILDS_DIR="${HOME}/NOBuilds/Bender/v${VERSION}"
+mkdir -p "${NOBUILDS_DIR}"
+
+# Generate source code archive
+echo "Generating source tarball..."
+tar --exclude=debian --exclude=.git --exclude=artifacts --exclude=__pycache__ --exclude=build --exclude=.pybuild -czf "${NOBUILDS_DIR}/bender_source.tar.gz" .
+
+# Copy packages and signatures
+cp "$DEB_FILE" "${NOBUILDS_DIR}/"
+cp "${DEB_FILE}.asc" "${NOBUILDS_DIR}/" || true
+cp "${DEB_FILE}.sha512" "${NOBUILDS_DIR}/" || true
+cp "${DEB_FILE}.sha512.asc" "${NOBUILDS_DIR}/" || true
+gpg --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
+
+# Copy license, readme, and sbom
+cp LICENSE "${NOBUILDS_DIR}/"
+cp README.md "${NOBUILDS_DIR}/"
+cp Audit/sbom.json "${NOBUILDS_DIR}/"
+
 echo "=================================================="
 echo "✅ Build Complete!"
 echo "Package: $DEB_FILE"
 echo "Hashsum: ${DEB_FILE}.sha512"
+echo "Local:   $NOBUILDS_DIR"
 echo "=================================================="
