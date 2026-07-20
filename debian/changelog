@@ -1,3 +1,9 @@
+bender (0.1.11) unstable; urgency=medium
+
+  * Release 0.1.11 auto-incremented by build helper script (Rule_017)
+
+ -- Chuck Talk <chuck@nordheim.online>  Mon, 20 Jul 2026 13:39:26 -0500
+
 bender (0.1.10-1) unstable; urgency=medium
 
   * Auto-increment build version to 0.1.10-1.
