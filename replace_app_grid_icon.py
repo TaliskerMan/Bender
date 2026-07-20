@@ -37,7 +37,7 @@ def download_logo(url, output_path):
         if not url.startswith("https://"):
             raise ValueError("Only HTTPS URLs are permitted.")
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
+        with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310 nosemgrep
             data = resp.read()
         with open(output_path, 'wb') as fh:
             fh.write(data)

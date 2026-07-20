@@ -311,7 +311,7 @@ class ProxyTab(Gtk.Box):
                 # reachable here. Semgrep flags it only because its dataflow
                 # cannot prove a module global is constant.
                 req = urllib.request.Request(HOSTS_URL)
-                with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
+                with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310 nosemgrep
                     raw_bytes = resp.read(MAX_BYTES + 1)
 
                 # B-04: Reject oversized responses
