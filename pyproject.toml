@@ -20,6 +20,9 @@ classifiers = [
 ]
 dependencies = [
     "PyGObject",
+    # Security-critical: hardened XML parser used by replace_app_grid_icon.py
+    # to parse SVG. Guards against XXE and Billion-Laughs DoS (CWE-611).
+    "defusedxml",
 ]
 
 [tool.setuptools.packages.find]

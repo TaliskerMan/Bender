@@ -15,18 +15,15 @@ import glob
 import subprocess
 import argparse
 # B-02 FIX: defusedxml prevents XXE and Billion-Laughs DoS attacks when parsing
-# untrusted SVG/XML input (CWE-611). defusedxml is a drop-in replacement.
-try:
-    import defusedxml.ElementTree as ET
-except ImportError:
-    # Fallback with a clear warning if defusedxml is not installed.
-    import warnings
-    warnings.warn(
-        "defusedxml is not installed. Install it with: pip install defusedxml\n"
-        "Falling back to xml.etree.ElementTree which is vulnerable to XXE (CWE-611).",
-        stacklevel=1
-    )
-    import xml.etree.ElementTree as ET  # nosec B405
+# untrusted SVG/XML input (CWE-611). It is a drop-in replacement for
+# xml.etree.ElementTree and is declared as a hard dependency in pyproject.toml.
+#
+# This import is deliberately NOT wrapped in a try/except with a fallback to
+# xml.etree. A fallback would mean that on any install where defusedxml is
+# absent the program silently parses untrusted SVG with the vulnerable parser —
+# the exact condition this fix exists to prevent — while appearing defended in
+# the source. Failing closed on a missing security dependency is correct.
+import defusedxml.ElementTree as ET
 import urllib.request
 
 LOG_URL = "https://raw.githubusercontent.com/pop-os/icon-theme/master/Pop/256x256/places/distributor-logo-pop-os.svg"

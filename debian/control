@@ -8,7 +8,7 @@ Homepage: https://github.com/TaliskerMan/Bender
 
 Package: bender
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, hicolor-icon-theme, policykit-1
+Depends: ${python3:Depends}, ${misc:Depends}, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, python3-defusedxml, hicolor-icon-theme, policykit-1
 Recommends: dnsutils | bind9-dnsutils, whois, unhide, flatpak, tinyproxy, ansiweather
 Suggests: nala
 Description: Linux workstation dashboard

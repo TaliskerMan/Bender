@@ -303,6 +303,13 @@ class ProxyTab(Gtk.Box):
                 import urllib.request
                 if not HOSTS_URL.startswith("https://"):
                     raise ValueError("HTTPS scheme required")
+                # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
+                # Reviewed and accepted: HOSTS_URL is a module-level constant
+                # pinned to an https:// address (see top of file), re-validated
+                # on the line above, and no caller-controlled input reaches this
+                # call. The file:// scheme abuse this rule warns about is not
+                # reachable here. Semgrep flags it only because its dataflow
+                # cannot prove a module global is constant.
                 req = urllib.request.Request(HOSTS_URL)
                 with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
                     raw_bytes = resp.read(MAX_BYTES + 1)
