@@ -1,3 +1,9 @@
+bender (0.1.12) unstable; urgency=medium
+
+  * Release 0.1.12 auto-incremented by build plan execution (CP-AutoIncrement)
+
+ -- Chuck Talk <chuck@nordheim.online>  Tue, 28 Jul 2026 09:15:00 -0500
+
 bender (0.1.11) unstable; urgency=medium
 
   * Release 0.1.11 auto-incremented by build helper script (Rule_017)

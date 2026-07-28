@@ -45,18 +45,19 @@ DEB_FILE="${BUILD_DIR}/${PACKAGE_NAME}_${VERSION}_all.deb"
 
 # Generate detached GPG signatures (standard for GitHub releases since dpkg-sig is deprecated)
 echo "[2/4] Generating GPG detached signature for .deb..."
-true --armor --detach-sign --default-key "$GPG_EMAIL" "$DEB_FILE"
+gpg --armor --detach-sign --default-key "$GPG_EMAIL" "$DEB_FILE"
 
 # Generate SHA512 hashsum and sign it
 echo "[3/4] Generating SHA512 hashsum..."
 cd "$BUILD_DIR"
 sha512sum "${PACKAGE_NAME}_${VERSION}_all.deb" > "${PACKAGE_NAME}_${VERSION}_all.deb.sha512"
-true --clearsign --default-key "$GPG_EMAIL" "${PACKAGE_NAME}_${VERSION}_all.deb.sha512"
+gpg --clearsign --default-key "$GPG_EMAIL" "${PACKAGE_NAME}_${VERSION}_all.deb.sha512" || true
 cd ..
 
 # Copy to NOBuilds directory
 echo "[4/4] Copying to NOBuilds directory..."
-NOBUILDS_DIR="${HOME}/NOBuilds/Bender/v${VERSION}"
+DATE_STR=$(date +%m-%d-%Y)
+NOBUILDS_DIR="${HOME}/NOBuilds/Bender-${DATE_STR}-${VERSION}"
 mkdir -p "${NOBUILDS_DIR}"
 
 # Generate source code archive
@@ -68,7 +69,7 @@ cp "$DEB_FILE" "${NOBUILDS_DIR}/"
 cp "${DEB_FILE}.asc" "${NOBUILDS_DIR}/" || true
 cp "${DEB_FILE}.sha512" "${NOBUILDS_DIR}/" || true
 cp "${DEB_FILE}.sha512.asc" "${NOBUILDS_DIR}/" || true
-true --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
+gpg --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
 
 # Copy license, readme, and sbom
 cp LICENSE "${NOBUILDS_DIR}/"
