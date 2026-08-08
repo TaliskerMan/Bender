@@ -32,6 +32,33 @@ mkdir -p "$BUILD_DIR"
 # Clean old artifacts
 rm -f ${BUILD_DIR}/${PACKAGE_NAME}*
 
+echo "==> Generating SBOM via Syft..."
+SYFT_BIN="syft"
+if ! command -v syft &> /dev/null; then
+    if [ -f "${HOME}/.local/bin/syft" ]; then
+        SYFT_BIN="${HOME}/.local/bin/syft"
+    elif [ -f "./syft" ]; then
+        SYFT_BIN="./syft"
+    fi
+fi
+if command -v "${SYFT_BIN}" &> /dev/null; then
+    mkdir -p Audit
+    "${SYFT_BIN}" dir:. \
+        --exclude ./venv \
+        --exclude ./.venv \
+        --exclude ./android \
+        --exclude ./ios \
+        --exclude ./macos \
+        --exclude ./windows \
+        --exclude ./build \
+        --exclude ./packaging_output \
+        --exclude ./dist \
+        --exclude ./plan \
+        -o cyclonedx-json > Audit/SBOM-Linux.json
+    cp Audit/SBOM-Linux.json Audit/SBOM-Linux
+    cp Audit/SBOM-Linux.json Audit/sbom.json
+fi
+
 # Build the package natively
 echo "[1/4] Building Debian package..."
 dpkg-buildpackage -us -uc -b
@@ -74,7 +101,9 @@ gpg --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
 # Copy license, readme, and sbom
 cp LICENSE "${NOBUILDS_DIR}/"
 cp README.md "${NOBUILDS_DIR}/"
-cp Audit/sbom.json "${NOBUILDS_DIR}/"
+cp Audit/SBOM-Linux.json "${NOBUILDS_DIR}/" || true
+cp Audit/SBOM-Linux "${NOBUILDS_DIR}/" || true
+cp Audit/sbom.json "${NOBUILDS_DIR}/" || true
 
 echo "=================================================="
 echo "✅ Build Complete!"
