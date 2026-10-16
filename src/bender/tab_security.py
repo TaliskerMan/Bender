@@ -14,8 +14,9 @@
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw
-from .runner import CommandRunner
+from gi.repository import Gtk
+from .runner import CommandRunner, describe_exit
+from . import assess
 
 
 # ── Per-check data ────────────────────────────────────────────────────────────
@@ -31,13 +32,17 @@ CHECKS = [
             "getent group sudo | cut -d: -f4 | tr ',' '\\n'"
         ),
         "sudo":  False,
+        "assess": assess.uid0,
     },
     {
         "id":    "badperms",
-        "label": "World-Writable Files (777)",
+        "label": "World-Writable Files (folders you can read)",
         "icon":  "dialog-warning-symbolic",
-        "cmd":   "find / -xdev -type f -perm 777 2>/dev/null | head -50",
+        # -perm -0002: anyone may write, whatever the other bits (777, 666…).
+        # Runs without admin rights, so folders you can't read are skipped.
+        "cmd":   "find / -xdev -type f -perm -0002 2>/dev/null | head -50",
         "sudo":  False,
+        "assess": assess.any_lines,
     },
     {
         "id":    "suid",
@@ -45,23 +50,30 @@ CHECKS = [
         "icon":  "security-medium-symbolic",
         "cmd":   "find /usr/bin /usr/sbin /bin /sbin -type f \\( -perm -4000 -o -perm -2000 \\) -ls 2>/dev/null",
         "sudo":  False,
+        "assess": assess.information,
     },
     {
-        "id":    "newusers",
-        "label": "Recent User Accounts",
+        "id":    "loginusers",
+        "label": "Accounts with a Login Shell",
         "icon":  "avatar-default-symbolic",
         "cmd":   (
-            "echo '--- All login-shell users ---' && "
-            "grep -E '/(bash|sh|zsh|fish)$' /etc/passwd | cut -d: -f1,3,5 | column -t -s:"
+            "echo '--- Accounts with a login shell (name, UID, full name) ---' && "
+            "awk -F: '$7 ~ /\\/(bash|sh|zsh|fish)$/ {printf \"%-20s %-8s %s\\n\", $1, $3, $5}' /etc/passwd"
         ),
         "sudo":  False,
+        "assess": assess.information,
     },
     {
         "id":    "zombies",
         "label": "Zombie Processes",
         "icon":  "process-stop-symbolic",
-        "cmd":   "ps aux | awk '$8~/^[Zz]/{print \"PID:\"$2, \"PPID:\"$3, \"USER:\"$1, \"CMD:\"$11}' || echo 'No zombies found'",
+        "cmd":   (
+            "ps -eo stat=,pid=,ppid=,user=,comm= | "
+            "awk '$1 ~ /^[Zz]/ {print \"PID:\"$2, \"PPID:\"$3, \"USER:\"$4, \"CMD:\"$5; n++} "
+            "END {if (!n) print \"No zombie processes found.\"}'"
+        ),
         "sudo":  False,
+        "assess": assess.zombies,
     },
     {
         "id":    "logins",
@@ -69,6 +81,7 @@ CHECKS = [
         "icon":  "document-open-recent-symbolic",
         "cmd":   "last -n 20 -d -w",
         "sudo":  False,
+        "assess": assess.information,
     },
     {
         "id":    "hidden",
@@ -80,6 +93,7 @@ CHECKS = [
         "cmd_list": ["unhide", "procall"],
         "requires": "unhide",
         "sudo":  True,
+        "assess": assess.hidden_processes,
     },
 ]
 
@@ -154,17 +168,18 @@ class _CheckRow(Gtk.Box):
         """
         self._run_btn.set_sensitive(True)
         result = stdout_text or stderr_text or "(no output)"
-        
+        if return_code != 0:
+            result += "\n" + describe_exit(return_code, stderr_text, self._check.get("sudo", False))
+
         end_iter = self._buf.get_end_iter()
         self._buf.insert(end_iter, f"{result}\n")
-        
+
+        # Each check judges its own output (see assess.py): ✅ nothing found,
+        # ⚠️ something to review, ℹ️ information only, ❌ the check failed.
         if return_code == 0:
-            if not stdout_text.strip() or "No" in stdout_text or stdout_text.strip() == "":
-                self._badge.set_text("✅")
-            else:
-                self._badge.set_text("⚠️")
+            self._badge.set_text(assess.BADGES[self._check["assess"](stdout_text)])
         else:
-            self._badge.set_text("❌")
+            self._badge.set_text(assess.FAILED_BADGE)
 
     def run(self):
         """Called programmatically by Run All."""

@@ -8,13 +8,14 @@ Homepage: https://github.com/TaliskerMan/Bender
 
 Package: bender
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, python3-defusedxml, hicolor-icon-theme, policykit-1
+Depends: ${python3:Depends}, ${misc:Depends}, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, hicolor-icon-theme, pkexec | policykit-1, iproute2, procps
 Recommends: dnsutils | bind9-dnsutils, whois, unhide, flatpak, tinyproxy, ansiweather
 Suggests: nala
 Description: Linux workstation dashboard
  Bender is a GTK4/libadwaita dashboard for the Linux desktop that wraps
- common system administration tasks into a tabbed GUI. Features include
- system monitoring, security auditing, network tools, maintenance actions,
- weather forecasts, and tinyproxy management.
+ common system administration tasks into a tabbed GUI: system overview,
+ security checks, network tools, maintenance actions (each asks before it
+ runs), a weather forecast via ansiweather/OpenWeatherMap, and tinyproxy
+ management.
  .
  Named after everyone's favourite bending unit from Futurama.

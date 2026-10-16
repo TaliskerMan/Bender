@@ -2,10 +2,8 @@
 # Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # Licensed under GPLv3 or later
 
-import importlib.metadata
 import os
-import gi
-from gi.repository import Gtk, Adw, Gio, GLib, Gdk
+from gi.repository import Gtk, Adw, Gio
 
 from .tab_system import SystemTab
 from .tab_security import SecurityTab

@@ -77,7 +77,7 @@ gpg --armor --detach-sign --default-key "$GPG_EMAIL" "$DEB_FILE"
 echo "[3/4] Generating SHA512 hashsum..."
 cd "$BUILD_DIR"
 sha512sum "${PACKAGE_NAME}_${VERSION}_all.deb" > "${PACKAGE_NAME}_${VERSION}_all.deb.sha512"
-gpg --clearsign --default-key "$GPG_EMAIL" "${PACKAGE_NAME}_${VERSION}_all.deb.sha512" || true
+gpg --clearsign --default-key "$GPG_EMAIL" "${PACKAGE_NAME}_${VERSION}_all.deb.sha512"
 cd ..
 
 # Copy to NOBuilds directory
@@ -88,13 +88,16 @@ mkdir -p "${NOBUILDS_DIR}"
 
 # Generate source code archive
 echo "Generating source tarball..."
-tar --exclude=debian --exclude=.git --exclude=artifacts --exclude=__pycache__ --exclude=build --exclude=.pybuild -czf "${NOBUILDS_DIR}/bender_source.tar.gz" .
+tar --exclude=debian --exclude=.git --exclude=artifacts --exclude=__pycache__ \
+    --exclude=build --exclude=.pybuild --exclude=./venv --exclude=./.venv \
+    --exclude=./bin --exclude='*.tar.gz' --exclude=.pytest_cache --exclude=.DS_Store \
+    -czf "${NOBUILDS_DIR}/bender_source.tar.gz" .
 
 # Copy packages and signatures
 cp "$DEB_FILE" "${NOBUILDS_DIR}/"
-cp "${DEB_FILE}.asc" "${NOBUILDS_DIR}/" || true
-cp "${DEB_FILE}.sha512" "${NOBUILDS_DIR}/" || true
-cp "${DEB_FILE}.sha512.asc" "${NOBUILDS_DIR}/" || true
+cp "${DEB_FILE}.asc" "${NOBUILDS_DIR}/"
+cp "${DEB_FILE}.sha512" "${NOBUILDS_DIR}/"
+cp "${DEB_FILE}.sha512.asc" "${NOBUILDS_DIR}/"
 gpg --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
 
 # Copy license, readme, and sbom

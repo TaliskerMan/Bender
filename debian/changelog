@@ -1,3 +1,19 @@
+bender (0.1.13) unstable; urgency=medium
+
+  * Maintenance actions all ask before running; package updates have no time
+    limit, run non-interactively and keep changed config files; System Update
+    uses nala when installed, otherwise apt-get.
+  * Shared-memory and /tmp clean-up only delete the user's own unused files
+    that are over a day old.
+  * Port checker uses ss (sees system services); lsof no longer needed.
+  * Security badges judge each check's own output.
+  * Weather fetches only when asked; location remembered locally.
+  * Proxy: warns when tinyproxy filtering is off; blocklist editor can't
+    overwrite an unreadable list; Steven Black update merges or replaces.
+  * Release fails if any signature can't be made.
+
+ -- Chuck Talk <chuck@nordheim.online>  Fri, 16 Oct 2026 12:00:00 -0500
+
 bender (0.1.12) unstable; urgency=medium
 
   * Release 0.1.12 auto-incremented by build plan execution (CP-AutoIncrement)

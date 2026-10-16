@@ -7,6 +7,71 @@ All notable changes to the Bender project are documented in this file. This proj
 
 ---
 
+## [0.1.13] - 2026-10-16
+
+### Fixed — do no harm
+- **Package updates are no longer cut off after 60 seconds.** Every command had
+  a 60 s limit, including the time spent at the password prompt, so System
+  Update and Flatpak Update could be abandoned part-way while the UI said "timed
+  out". Updates now have no time limit.
+- **System Update runs non-interactively and keeps your config files.** With no
+  terminal, a package asking about a changed config file could stop the upgrade
+  half-way. It now answers with dpkg's "keep the installed version" choice. It
+  uses nala when installed and falls back to apt-get (it previously failed
+  without nala).
+- **Clear Shared Memory deleted every file in /dev/shm as root**, including
+  files in use by running programs (audio, browsers, databases). It now runs
+  without admin rights and deletes only your own files that are over a day old
+  and not open or memory-mapped by any program. **Clean Temp Files** follows the
+  same rules for `qipc*`/`gdm*` in /tmp.
+- **Every Maintenance action asks before it runs** (previously only the GNOME
+  reset did), and the output now says whether it finished, failed or was
+  cancelled at the password prompt.
+- **The blocklist editor can no longer overwrite your list with an error
+  message.** If the file can't be read, Save is turned off. Auto-Update (Steven
+  Black) now asks whether to merge with or replace your list (it used to
+  replace it, dropping domains you added). Saving, Quick Add and Auto-Update
+  ask for the password once and apply the change straight away if the proxy is
+  running; they no longer start a proxy you had stopped.
+
+### Fixed — claims and results that weren't true
+- README said weather came from wttr.in with "no ansiweather required"; it
+  comes from `ansiweather` (OpenWeatherMap). README now lists all 8 tabs.
+- The Weather tab sent "Austin,TX,USA" to OpenWeatherMap every time Bender
+  opened. Nothing is fetched until you click Get Weather; the last location is
+  remembered in `~/.config/bender/weather.json` (mode 0600).
+- Port Checker used `lsof` (not a dependency), which without admin rights can't
+  see other users' programs, so it said "No process listening" for ports held by
+  system services. It now uses `ss`, which sees every listening socket.
+- Security badges: any output containing "No" showed ✅ (so every November's
+  login list "passed"). Each check now judges its own output: ✅ nothing found,
+  ⚠️ review, ℹ️ information only, ❌ failed. "Recent User Accounts" (which listed
+  all accounts) is now "Accounts with a Login Shell"; the 777 check now finds
+  all world-writable files and says it only searches folders you can read.
+- Proxy tab: says when tinyproxy's filtering is switched off (the default, in
+  which case the blocklist does nothing) and which programs are filtered. "Live"
+  log tail renamed; an unreadable log now says so instead of "not found".
+- USER_GUIDE.md described features that don't exist (firewall check,
+  "ShadowAgent Rules", managing systemd services, removing orphaned packages,
+  switching proxy configurations). It now points to the user guide.
+- Domain fields accepted values starting with "-", which dig/whois would read as
+  an option.
+- Connections-per-IP counts split IPv6 addresses at the first colon.
+
+### Changed
+- Release: a failed checksum signature now stops the build (it was ignored),
+  and the source tarball no longer includes `venv/` or `bin/syft`.
+- Package: depends on `iproute2` and `procps`, and on `pkexec` or
+  `policykit-1`; no longer depends on `python3-defusedxml` (only a developer
+  script uses it).
+- Generated Debian build files are no longer tracked in git.
+- Lint rules pinned in `pyproject.toml`; tests added for the clean-up rules,
+  security badges, tinyproxy config parsing, blocklist merge and port checker.
+
+## [0.1.10–0.1.12]
+- Version bumps by the build scripts (docstrings and user documentation added
+  in 0.1.10); not individually documented.
+
 ## [0.1.9] - 2026-06-22
 
 ### Fixed

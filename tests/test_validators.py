@@ -11,7 +11,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from bender.validators import (  # noqa: E402
     is_valid_domain,
     is_valid_city,
+    merge_blocklists,
     parse_hosts_blocklist,
+    parse_tinyproxy_conf,
 )
 
 
@@ -32,6 +34,11 @@ class TestIsValidDomain:
             "exa|mple.com",
             "`id`.com",
         ]:
+            assert not is_valid_domain(bad), bad
+
+    def test_rejects_values_that_look_like_options(self):
+        # dig/whois would read these as options, not domains.
+        for bad in ["-h", "-x", "--help", ".example.com", "a" * 254]:
             assert not is_valid_domain(bad), bad
 
 
@@ -76,3 +83,30 @@ class TestParseHostsBlocklist:
         domains = parse_hosts_blocklist(raw)
         assert "good.com" in domains
         assert all(";" not in d for d in domains)
+
+
+class TestTinyproxyConf:
+    def test_shipped_config_has_filter_off(self):
+        conf = (
+            'User tinyproxy\nPort 8888\n'
+            '# Filter: This allows you to specify the location of the filter file.\n'
+            '#Filter "/etc/tinyproxy/filter"\n'
+        )
+        assert parse_tinyproxy_conf(conf) == {"filter": None, "port": 8888}
+
+    def test_active_filter_line(self):
+        conf = 'Port 3128\nFilter "/etc/tinyproxy/blocked"  # mine\n'
+        assert parse_tinyproxy_conf(conf) == {"filter": "/etc/tinyproxy/blocked", "port": 3128}
+
+    def test_unquoted_filter(self):
+        assert parse_tinyproxy_conf("  Filter /etc/tinyproxy/filter\n")["filter"] == "/etc/tinyproxy/filter"
+
+
+class TestMergeBlocklists:
+    def test_keeps_user_entries_and_adds_new(self):
+        merged = merge_blocklists("# mine\nmysite.com\nads.example.com\n",
+                                  ["ads.example.com", "tracker.net"])
+        assert merged == "# mine\nmysite.com\nads.example.com\ntracker.net\n"
+
+    def test_empty_existing(self):
+        assert merge_blocklists("", ["a.com"]) == "a.com\n"

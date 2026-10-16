@@ -52,7 +52,6 @@ class BenderApp(Adw.Application):
         Adw.Application.do_startup(self)
         
         # In dev mode, GTK needs to know where our local icons are
-        import os
         from gi.repository import Gdk
         _src_dir = os.path.dirname(os.path.abspath(__file__))
         _icons_dir = os.path.normpath(os.path.join(_src_dir, '..', '..', 'data', 'icons'))

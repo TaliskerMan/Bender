@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bender"
-version = "0.1.12"
+version = "0.1.13"
 description = "Linux workstation dashboard — Bite my shiny metal app!"
 readme = "README.md"
 authors = [
@@ -30,3 +30,10 @@ where = ["src"]
 
 [project.scripts]
 bender = "bender.main:main"
+
+[tool.ruff.lint]
+# Pin the rule set so CI doesn't change meaning when ruff's defaults do.
+select = ["E4", "E7", "E9", "F"]
+# GTK modules must call gi.require_version() before importing from
+# gi.repository, so module-level imports after code are expected.
+ignore = ["E402"]

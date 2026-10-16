@@ -18,14 +18,21 @@ without a GTK display.
 import re
 
 # A conservative allowlist: letters, digits, dots and hyphens only — no shell
-# metacharacters, spaces, or slashes can pass.
-_DOMAIN_RE = re.compile(r"^[a-zA-Z0-9.-]+$")
+# metacharacters, spaces, or slashes can pass. The first character must be a
+# letter or digit: a value starting with "-" would be read by dig/whois as an
+# option rather than a domain.
+_DOMAIN_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.-]*$")
+_MAX_DOMAIN_LENGTH = 253
 _CITY_RE = re.compile(r"^[a-zA-Z0-9.,_ ]+$")
 
 
 def is_valid_domain(value: str) -> bool:
     """True if [value] is a syntactically safe domain (no injection chars)."""
-    return bool(value) and _DOMAIN_RE.match(value) is not None
+    return (
+        bool(value)
+        and len(value) <= _MAX_DOMAIN_LENGTH
+        and _DOMAIN_RE.match(value) is not None
+    )
 
 
 def is_valid_city(value: str) -> bool:
@@ -50,3 +57,39 @@ def parse_hosts_blocklist(raw: str) -> list:
         ):
             domains.append(parts[1])
     return domains
+
+
+# tinyproxy's default config file (Debian/Ubuntu package).
+TINYPROXY_CONF = "/etc/tinyproxy/tinyproxy.conf"
+
+_CONF_LINE_RE = re.compile(r'^\s*(\w+)\s+"?([^"#]*?)"?\s*(?:#.*)?$')
+
+
+def parse_tinyproxy_conf(text: str) -> dict:
+    """Read the settings Bender needs from tinyproxy.conf.
+
+    Returns {"filter": <filter file path or None>, "port": <int or None>}.
+    "filter" is None when no active (uncommented) ``Filter`` line exists, which
+    is how tinyproxy ships: with it, the blocklist is ignored entirely.
+    """
+    settings = {"filter": None, "port": None}
+    for line in text.splitlines():
+        match = _CONF_LINE_RE.match(line)
+        if not match:
+            continue
+        key, value = match.group(1).lower(), match.group(2).strip()
+        if key == "filter" and value:
+            settings["filter"] = value
+        elif key == "port" and value.isdigit():
+            settings["port"] = int(value)
+    return settings
+
+
+def merge_blocklists(existing: str, downloaded: list) -> str:
+    """Keep every line of the user's *existing* blocklist and append the
+    *downloaded* domains it doesn't already contain."""
+    lines = existing.splitlines()
+    present = {line.strip() for line in lines}
+    added = [domain for domain in downloaded if domain not in present]
+    merged = lines + added
+    return "\n".join(merged) + "\n" if merged else ""

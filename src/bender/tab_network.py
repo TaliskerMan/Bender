@@ -14,10 +14,9 @@
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw  # B-06: removed duplicate import
+from gi.repository import Gtk  # B-06: removed duplicate import
 from .runner import CommandRunner
 from .validators import is_valid_domain
-import shlex
 
 
 def _tool_row(label: str, placeholder: str, btn_label: str, on_clicked) -> tuple:
@@ -47,6 +46,19 @@ def _output_view() -> tuple:
     sw = Gtk.ScrolledWindow(vexpand=True, min_content_height=140)
     sw.set_child(tv)
     return sw, buf
+
+
+def describe_port(port: str, stdout: str, stderr: str, return_code: int) -> str:
+    """Text for the Port Checker from ss's output."""
+    if return_code != 0:
+        return stderr or f"Could not check port {port} (exit code {return_code})."
+    if not stdout.strip():
+        return f"Nothing is listening on TCP port {port}."
+    note = ""
+    if "users:(" not in stdout:
+        note = ("\n\nThe program's name isn't shown because it belongs to "
+                "another user (for example a system service).")
+    return f"Listening on TCP port {port}:\n{stdout}{note}"
 
 
 class NetworkTab(Gtk.Box):
@@ -151,8 +163,11 @@ class NetworkTab(Gtk.Box):
 
     def _check_port(self, _button):
         """
-        Checks if a TCP port is open locally by running lsof on the system.
-        Performs basic numeric validation before running command runner.
+        Shows what is listening on a local TCP port, using ss (iproute2).
+
+        ss lists every listening socket whoever owns it, so a port held by a
+        system service is reported correctly even without admin rights. Only
+        the program NAME is hidden for other users' processes.
         """
         port = self._port_entry.get_text().strip()
         # Strict numeric validation — isdigit() + range check
@@ -162,9 +177,9 @@ class NetworkTab(Gtk.Box):
         self._port_buf.set_text(f"Checking port {port}…")
         # B-01 FIX: list-form — port is never interpreted by a shell
         CommandRunner.run(
-            ["lsof", f"-iTCP:{port}", "-sTCP:LISTEN", "-n", "-P"],
+            ["ss", "-H", "-l", "-t", "-n", "-p", "sport", "=", f":{port}"],
             lambda stdout, stderr, return_code: self._port_buf.set_text(
-                stdout or f"No process listening on port {port}" if return_code != 0 else stdout or "No data"
+                describe_port(port, stdout, stderr, return_code)
             )
         )
 
@@ -234,6 +249,9 @@ class NetworkTab(Gtk.Box):
         """
         self._ddos_buf.set_text("Scanning…")
         CommandRunner.run_shell(
-            "ss -ntu 2>/dev/null | awk 'NR>1{print $6}' | cut -d: -f1 | sort | uniq -c | sort -rn | head -30",
+            # Peer address is field 6; strip its port (after the LAST colon, so
+            # IPv6 addresses stay whole) and any [ ] around it.
+            "ss -Hntu 2>/dev/null | awk '{a=$6; sub(/:[^:]*$/, \"\", a); "
+            "gsub(/^\\[|\\]$/, \"\", a); print a}' | sort | uniq -c | sort -rn | head -30",
             lambda stdout, stderr, return_code: self._ddos_buf.set_text(stdout or "No active connections" if not stderr else stderr)
         )

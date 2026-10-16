@@ -21,6 +21,25 @@ import threading
 import subprocess
 from gi.repository import GLib
 
+# Seconds before a quick read-only command is abandoned. Long-running actions
+# (package updates) pass timeout=None.
+DEFAULT_TIMEOUT = 60
+
+# pkexec exit codes (see pkexec(1)).
+PKEXEC_DISMISSED = 126
+PKEXEC_NOT_AUTHORIZED = 127
+
+
+def describe_exit(returncode: int, stderr: str = "", privileged: bool = False) -> str:
+    """One line saying how a command ended, for the output panels."""
+    if returncode == 0:
+        return "Finished."
+    if privileged and returncode == PKEXEC_DISMISSED:
+        return "Cancelled: the administrator password prompt was dismissed."
+    if privileged and returncode == PKEXEC_NOT_AUTHORIZED and "Not authorized" in (stderr or ""):
+        return "Not authorised: administrator rights were refused."
+    return f"Failed (exit code {returncode})."
+
 
 class CommandRunner:
     """
@@ -34,16 +53,24 @@ class CommandRunner:
     """
 
     @staticmethod
-    def run(cmd: list, callback, use_sudo: bool = False):
+    def run(cmd: list, callback, use_sudo: bool = False,
+            timeout=DEFAULT_TIMEOUT, input_text=None):
         """
         Execute a command given as an explicit argument list.
 
         Args:
-            cmd:      Command as a list of strings. Strings are NEVER interpreted
-                      by a shell, so no injection is possible.
-            callback: callable(stdout: str, stderr: str, returncode: int)
-            use_sudo: If True, prepends /usr/bin/pkexec to the list for
-                      polkit-based privilege escalation. cmd MUST be a list.
+            cmd:        Command as a list of strings. Strings are NEVER
+                        interpreted by a shell, so no injection is possible.
+            callback:   callable(stdout: str, stderr: str, returncode: int)
+            use_sudo:   If True, prepends /usr/bin/pkexec to the list for
+                        polkit-based privilege escalation. cmd MUST be a list.
+            timeout:    Seconds before the command is abandoned, or None for no
+                        limit. Package updates must use None: stopping one
+                        part-way can leave dpkg half-configured, and the time
+                        spent at the password prompt counts too.
+            input_text: Text fed to the command's stdin. Otherwise stdin is
+                        /dev/null, so a command that unexpectedly asks a
+                        question gets end-of-file instead of hanging.
         """
         if not isinstance(cmd, list):
             raise TypeError(
@@ -60,14 +87,16 @@ class CommandRunner:
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    input=input_text,
+                    stdin=None if input_text is not None else subprocess.DEVNULL,
+                    timeout=timeout,
                 )
                 stdout = result.stdout.strip()
                 stderr = result.stderr.strip()
                 returncode = result.returncode
             except subprocess.TimeoutExpired:
                 stdout = ""
-                stderr = "Command timed out after 60 seconds."
+                stderr = f"Command timed out after {timeout} seconds."
                 returncode = -1
             except FileNotFoundError as error:
                 # E.g. 'ip' or 'dig' isn't installed
@@ -86,7 +115,8 @@ class CommandRunner:
         worker_thread.start()
 
     @staticmethod
-    def run_shell(cmd_str: str, callback, use_sudo: bool = False):
+    def run_shell(cmd_str: str, callback, use_sudo: bool = False,
+                  timeout=DEFAULT_TIMEOUT):
         """
         Convenience wrapper for hardcoded shell pipeline strings.
 
@@ -106,7 +136,7 @@ class CommandRunner:
                 "Use CommandRunner.run(list_of_args, use_sudo=True) instead."
             )
         cmd_list = ["/bin/bash", "-c", cmd_str]
-        CommandRunner.run(cmd_list, callback, use_sudo=False)
+        CommandRunner.run(cmd_list, callback, use_sudo=False, timeout=timeout)
 
     @staticmethod
     def command_exists(name: str) -> bool:

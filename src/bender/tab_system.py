@@ -14,7 +14,7 @@
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw, GLib
+from gi.repository import Gtk, GLib
 from .runner import CommandRunner
 
 
@@ -97,7 +97,7 @@ class SystemTab(Gtk.Box):
         # ── Top 10 Processes ─────────────────────────────────────────────────
         inner.append(_section_label("📋  Top 10 Processes (by Memory)"))
         sw6, self._proc_buf = _mono_view("Loading…")
-        sw6.set_min_content_height=140
+        sw6.set_min_content_height(140)
         inner.append(sw6)
 
         # Auto-refresh every 15 seconds

@@ -24,6 +24,8 @@ debian/.pybuild/
 debian/files
 debian/*.substvars
 debian/*.debhelper.log
+debian/*.debhelper
+debian/debhelper-build-stamp
 
 # IDE / editor
 .idea/

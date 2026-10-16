@@ -9,14 +9,52 @@
 # but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
 # Bender — Weather Tab
-# Fetches weather by wrapping the ansiweather CLI utility.
+# Fetches weather by wrapping the ansiweather CLI utility, which gets its data
+# from OpenWeatherMap. Nothing is fetched until the user asks: the location is
+# sent to OpenWeatherMap, so Bender must not do that on its own at start-up.
+
+import json
+import os
+import re
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw, GLib
+from gi.repository import Gtk, Adw
 from .runner import CommandRunner
 from .validators import is_valid_city
+
+
+def _settings_path() -> str:
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(base, "bender", "weather.json")
+
+
+def load_weather_settings() -> dict:
+    """The last location and unit the user fetched, or defaults."""
+    try:
+        with open(_settings_path(), encoding="utf-8") as fh:
+            data = json.load(fh)
+        location = data.get("location", "")
+        metric = bool(data.get("metric", False))
+        if location and not is_valid_city(location):
+            location = ""
+        return {"location": location, "metric": metric}
+    except (OSError, ValueError, AttributeError):
+        return {"location": "", "metric": False}
+
+
+def save_weather_settings(location: str, metric: bool) -> None:
+    """Remember the location (kept only on this computer, readable only by you)."""
+    path = _settings_path()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump({"location": location, "metric": metric}, fh)
+    except OSError:
+        pass
+
 
 class WeatherTab(Gtk.Box):
     """
@@ -55,13 +93,19 @@ class WeatherTab(Gtk.Box):
         city_lbl.add_css_class("dim-label")
         ctrl.append(city_lbl)
 
-        self._city_entry = Gtk.Entry(text="Austin,TX,USA", hexpand=True)
+        settings = load_weather_settings()
+        self._city_entry = Gtk.Entry(
+            text=settings["location"],
+            placeholder_text="City,State,Country — e.g. Austin,TX,USA",
+            hexpand=True,
+        )
         # Fetch when enter is pressed
         self._city_entry.connect("activate", self._fetch)
         ctrl.append(self._city_entry)
 
         # Temperature Unit Dropdown
         self._unit_dropdown = Gtk.DropDown.new_from_strings(["°F (Imperial)", "°C (Metric)"])
+        self._unit_dropdown.set_selected(1 if settings["metric"] else 0)
         self._unit_dropdown.connect("notify::selected", self._on_unit_changed)
         ctrl.append(self._unit_dropdown)
 
@@ -70,12 +114,22 @@ class WeatherTab(Gtk.Box):
         fetch_btn.connect("clicked", self._fetch)
         ctrl.append(fetch_btn)
 
+        privacy = Gtk.Label(
+            label="The location you enter is sent to OpenWeatherMap (through "
+                  "ansiweather) when you click Get Weather.",
+            xalign=0, wrap=True,
+        )
+        privacy.add_css_class("dim-label")
+        inner.append(privacy)
+
         # ── Output Area ───────────────────────────────────────────────────────
         self._output_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=12)
         inner.append(self._output_box)
 
         # We'll use a large centered label for the status and output
-        self._status_lbl = Gtk.Label(label="Loading...", wrap=True, justify=Gtk.Justification.CENTER)
+        self._status_lbl = Gtk.Label(
+            label="Enter a location and click Get Weather.",
+            wrap=True, justify=Gtk.Justification.CENTER)
         self._status_lbl.add_css_class("title-3")
         self._status_lbl.set_margin_top(20)
         self._output_box.append(self._status_lbl)
@@ -94,8 +148,6 @@ class WeatherTab(Gtk.Box):
         tv_box.append(tv_frame)
         self._output_box.append(tv_box)
 
-        # Auto-load on startup
-        self._fetch()
 
     def _fetch(self, *_):
         """
@@ -108,10 +160,12 @@ class WeatherTab(Gtk.Box):
             
         if not is_valid_city(city):
             self._status_lbl.set_text("Invalid location format.")
-            self._buf.set_text("Only alphanumeric characters and commas are allowed in locations.")
+            self._buf.set_text("Use only letters, digits, spaces, commas, dots and underscores.")
             return
-            
-        unit = "metric" if self._unit_dropdown.get_selected() == 1 else "imperial"
+
+        metric = self._unit_dropdown.get_selected() == 1
+        unit = "metric" if metric else "imperial"
+        save_weather_settings(city, metric)
         self._status_lbl.set_text(f"Fetching weather for {city}...")
         self._buf.set_text("Loading...")
         
@@ -133,7 +187,6 @@ class WeatherTab(Gtk.Box):
 
         text = stdout_text.strip()
         # Clean up ANSI escape codes if any snuck through (though -a false should stop them)
-        import re
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         text = ansi_escape.sub('', text)
         
@@ -166,6 +219,8 @@ class WeatherTab(Gtk.Box):
 
     def _on_unit_changed(self, dropdown, pspec):
         """
-        Triggers a fresh weather query when unit type selection dropdown is modified.
+        Re-fetches in the new unit, but only if a location has been entered:
+        changing the unit must not send anything on its own.
         """
-        self._fetch()
+        if self._city_entry.get_text().strip():
+            self._fetch()
