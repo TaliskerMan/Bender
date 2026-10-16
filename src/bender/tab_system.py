@@ -17,6 +17,10 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, GLib
 from .runner import CommandRunner
 
+# Constants for UI loading and empty data messages per rule CP-Readability-DRY
+_LOADING_MSG = "Loading…"
+_NO_DATA_MSG = "No data"
+
 
 def _section_label(text: str) -> Gtk.Label:
     lbl = Gtk.Label(label=text, xalign=0)
@@ -65,38 +69,38 @@ class SystemTab(Gtk.Box):
 
         # ── Hostname / System Info ────────────────────────────────────────────
         inner.append(_section_label("🖥  System Info"))
-        _, self._sysinfo_buf = _mono_view("Loading…")
+        _, self._sysinfo_buf = _mono_view(_LOADING_MSG)
         sw1, _ = _mono_view()
-        sw1.get_child().get_buffer().set_text("Loading…")
+        sw1.get_child().get_buffer().set_text(_LOADING_MSG)
         self._sysinfo_buf = sw1.get_child().get_buffer()
         inner.append(sw1)
 
         # ── Disk Usage ────────────────────────────────────────────────────────
         inner.append(_section_label("💽  Disk Usage"))
-        sw2, self._disk_buf = _mono_view("Loading…")
+        sw2, self._disk_buf = _mono_view(_LOADING_MSG)
         inner.append(sw2)
 
         # ── Memory ───────────────────────────────────────────────────────────
         inner.append(_section_label("🧠  Memory"))
-        sw3, self._mem_buf = _mono_view("Loading…")
+        sw3, self._mem_buf = _mono_view(_LOADING_MSG)
         sw3.set_min_content_height(60)
         inner.append(sw3)
 
         # ── Uptime ────────────────────────────────────────────────────────────
         inner.append(_section_label("⏱  Uptime & Load"))
-        sw4, self._uptime_buf = _mono_view("Loading…")
+        sw4, self._uptime_buf = _mono_view(_LOADING_MSG)
         sw4.set_min_content_height(40)
         inner.append(sw4)
 
         # ── Displays ─────────────────────────────────────────────────────────
         inner.append(_section_label("🖵  Connected Displays"))
-        sw5, self._disp_buf = _mono_view("Loading…")
+        sw5, self._disp_buf = _mono_view(_LOADING_MSG)
         sw5.set_min_content_height(60)
         inner.append(sw5)
 
         # ── Top 10 Processes ─────────────────────────────────────────────────
         inner.append(_section_label("📋  Top 10 Processes (by Memory)"))
-        sw6, self._proc_buf = _mono_view("Loading…")
+        sw6, self._proc_buf = _mono_view(_LOADING_MSG)
         sw6.set_min_content_height(140)
         inner.append(sw6)
 
@@ -135,25 +139,25 @@ class SystemTab(Gtk.Box):
         """
         Updates the hostnamectl system info terminal text buffer.
         """
-        self._sysinfo_buf.set_text(stdout_text or stderr_text or "No data")
+        self._sysinfo_buf.set_text(stdout_text or stderr_text or _NO_DATA_MSG)
 
     def _on_disk(self, stdout_text, stderr_text, return_code):
         """
         Updates the disk usage terminal text buffer.
         """
-        self._disk_buf.set_text(stdout_text or stderr_text or "No data")
+        self._disk_buf.set_text(stdout_text or stderr_text or _NO_DATA_MSG)
 
     def _on_mem(self, stdout_text, stderr_text, return_code):
         """
         Updates the memory usage terminal text buffer.
         """
-        self._mem_buf.set_text(stdout_text or stderr_text or "No data")
+        self._mem_buf.set_text(stdout_text or stderr_text or _NO_DATA_MSG)
 
     def _on_uptime(self, stdout_text, stderr_text, return_code):
         """
         Updates the uptime & system load terminal text buffer.
         """
-        self._uptime_buf.set_text(stdout_text or stderr_text or "No data")
+        self._uptime_buf.set_text(stdout_text or stderr_text or _NO_DATA_MSG)
 
     def _on_displays(self, stdout_text, stderr_text, return_code):
         """
@@ -165,4 +169,4 @@ class SystemTab(Gtk.Box):
         """
         Updates the top process list terminal text buffer.
         """
-        self._proc_buf.set_text(stdout_text or stderr_text or "No data")
+        self._proc_buf.set_text(stdout_text or stderr_text or _NO_DATA_MSG)

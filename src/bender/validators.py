@@ -62,9 +62,6 @@ def parse_hosts_blocklist(raw: str) -> list:
 # tinyproxy's default config file (Debian/Ubuntu package).
 TINYPROXY_CONF = "/etc/tinyproxy/tinyproxy.conf"
 
-_CONF_LINE_RE = re.compile(r'^\s*(\w+)\s+"?([^"#]*?)"?\s*(?:#.*)?$')
-
-
 def parse_tinyproxy_conf(text: str) -> dict:
     """Read the settings Bender needs from tinyproxy.conf.
 
@@ -73,11 +70,16 @@ def parse_tinyproxy_conf(text: str) -> dict:
     is how tinyproxy ships: with it, the blocklist is ignored entirely.
     """
     settings = {"filter": None, "port": None}
-    for line in text.splitlines():
-        match = _CONF_LINE_RE.match(line)
-        if not match:
+    for raw_line in text.splitlines():
+        # Strip trailing comments and surrounding whitespace per CP-Comments (linear parse, no ReDoS)
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
             continue
-        key, value = match.group(1).lower(), match.group(2).strip()
+        parts = line.split(None, 1)
+        if len(parts) < 2:
+            continue
+        key = parts[0].lower()
+        value = parts[1].strip().strip('"').strip("'").strip()
         if key == "filter" and value:
             settings["filter"] = value
         elif key == "port" and value.isdigit():

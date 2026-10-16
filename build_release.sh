@@ -100,12 +100,18 @@ cp "${DEB_FILE}.sha512" "${NOBUILDS_DIR}/"
 cp "${DEB_FILE}.sha512.asc" "${NOBUILDS_DIR}/"
 gpg --armor --export "$GPG_EMAIL" > "${NOBUILDS_DIR}/pubkey.asc"
 
-# Copy license, readme, and sbom
+# Copy license, readme, sbom, and user guide PDF per L-Release
 cp LICENSE "${NOBUILDS_DIR}/"
 cp README.md "${NOBUILDS_DIR}/"
 cp Audit/SBOM-Linux.json "${NOBUILDS_DIR}/" || true
 cp Audit/SBOM-Linux "${NOBUILDS_DIR}/" || true
 cp Audit/sbom.json "${NOBUILDS_DIR}/" || true
+cp docs/Bender_User_Guide.pdf "${BUILD_DIR}/" || true
+cp docs/Bender_User_Guide.pdf "${NOBUILDS_DIR}/" || true
+cp "${BUILD_DIR}/${PACKAGE_NAME}_${VERSION}_all.deb.sha512" "${BUILD_DIR}/checksums.sha512" || true
+cp "${BUILD_DIR}/checksums.sha512" "${NOBUILDS_DIR}/" || true
+( cd "${BUILD_DIR}" && rm -f SHA512SUMS && sha512sum * > SHA512SUMS )
+( cd "${NOBUILDS_DIR}" && rm -f SHA512SUMS && sha512sum * > SHA512SUMS )
 
 echo "=================================================="
 echo "✅ Build Complete!"

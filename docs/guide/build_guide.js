@@ -1,21 +1,34 @@
 // Builds a Nordheim Online user guide PDF from Markdown.
 // Usage: node build_guide.js <guide.md> <icon.png> <out.pdf>
 // Front matter (first lines):  title: / subtitle: / version: / platforms:
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { marked } = require('marked');
 const { chromium } = require('playwright');
 
 const [, , MD, ICON, OUT] = process.argv;
 let src = fs.readFileSync(MD, 'utf8');
 const meta = {};
-while (/^(\w+):\s*(.*)\n/.test(src)) {
-  const m = src.match(/^(\w+):\s*(.*)\n/);
-  meta[m[1]] = m[2];
-  src = src.slice(m[0].length);
+// Parse front matter linearly without regex backtracking (Sonar S8786)
+const lines = src.split(/\r?\n/);
+let headerLines = 0;
+for (const line of lines) {
+  const colonIdx = line.indexOf(':');
+  if (colonIdx > 0 && /^\w+$/.test(line.slice(0, colonIdx))) {
+    const key = line.slice(0, colonIdx).trim();
+    const val = line.slice(colonIdx + 1).trim();
+    meta[key] = val;
+    headerLines++;
+  } else {
+    break;
+  }
 }
-const iconB64 = fs.readFileSync(ICON).toString('base64');
-const logoB64 = fs.readFileSync(path.join(__dirname, 'logo.png')).toString('base64');
+src = lines.slice(headerLines).join('\n');
+const iconB64 = ICON && fs.existsSync(ICON) ? fs.readFileSync(ICON).toString('base64') : '';
+const logoCandidate = path.join(__dirname, 'logo.png');
+const fallbackLogo = path.join(__dirname, '../../data/noln.png');
+const resolvedLogo = fs.existsSync(logoCandidate) ? logoCandidate : fallbackLogo;
+const logoB64 = fs.existsSync(resolvedLogo) ? fs.readFileSync(resolvedLogo).toString('base64') : '';
 
 // Callouts: lines starting with "> **Note:**" etc. render as styled blockquotes.
 let body = marked.parse(src, { mangle: false, headerIds: true });
@@ -84,16 +97,31 @@ strong { color: var(--navy); }
 ${body}
 </body></html>`;
 
-(async () => {
+// Generate PDF via Playwright (using top-level await per Sonar S7785)
+async function renderPdf() {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
+  let cleanTitle = meta.title || '';
+  while (cleanTitle.includes('<') && cleanTitle.includes('>')) {
+    const start = cleanTitle.indexOf('<');
+    const end = cleanTitle.indexOf('>', start);
+    if (end === -1) break;
+    cleanTitle = cleanTitle.slice(0, start) + cleanTitle.slice(end + 1);
+  }
   await page.pdf({
     path: OUT, format: 'Letter', printBackground: true, displayHeaderFooter: true,
     headerTemplate: '<div></div>',
-    footerTemplate: `<div style="font-family:Arial;font-size:8px;color:#6a7385;width:100%;padding:0 0.85in;display:flex;justify-content:space-between;"><span>${meta.title.replace(/<[^>]+>/g, '')} · ${meta.version}</span><span class="pageNumber"></span></div>`,
+    footerTemplate: `<div style="font-family:Arial;font-size:8px;color:#6a7385;width:100%;padding:0 0.85in;display:flex;justify-content:space-between;"><span>${cleanTitle} · ${meta.version}</span><span class="pageNumber"></span></div>`,
     margin: { top: '0.8in', bottom: '0.9in', left: '0.85in', right: '0.85in' },
   });
   await browser.close();
   console.log('wrote', OUT);
-})();
+}
+
+try {
+  await renderPdf();
+} catch (err) {
+  console.error('Failed to generate PDF guide:', err);
+  process.exitCode = 1;
+}

@@ -90,3 +90,24 @@ def test_weather_location_is_remembered_privately(tmp_path, monkeypatch):
     assert tab_weather.load_weather_settings() == {"location": "Austin,TX,USA", "metric": True}
     mode = os.stat(tmp_path / "bender" / "weather.json").st_mode & 0o777
     assert mode == 0o600
+
+
+def test_about_tab_compliance():
+    """Verify About tab contains copyright Chuck Talk, email, and version per CP-AboutPage and CP-AutoIncrement."""
+    from bender import tab_about, __version__
+    about = tab_about.AboutTab()
+    labels = []
+
+    def collect_labels(widget):
+        if isinstance(widget, Gtk.Label):
+            labels.append(widget.get_label())
+        child = widget.get_first_child()
+        while child:
+            collect_labels(child)
+            child = child.get_next_sibling()
+
+    collect_labels(about)
+    label_text = " ".join(labels)
+    assert "Chuck Talk" in label_text
+    assert "chuck@nordheim.online" in label_text
+    assert __version__ in label_text

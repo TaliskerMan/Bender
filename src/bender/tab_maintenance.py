@@ -117,7 +117,7 @@ ACTIONS = [
         "subtitle": "Delete your own files in /dev/shm that are over a day old and not in use",
         "icon":     "edit-clear-symbolic",
         "kind":     "python",
-        "cmd":      lambda: cleanup.clean("/dev/shm"),
+        "cmd":      cleanup.clean_shm,
         "timeout":  None,
         "requires": (),
         "confirm":  "Delete your own files in /dev/shm that haven't changed "
@@ -145,7 +145,7 @@ ACTIONS = [
         "subtitle": "Delete your own qipc* and gdm* files in /tmp that are over a day old and not in use",
         "icon":     "folder-templates-symbolic",
         "kind":     "python",
-        "cmd":      lambda: cleanup.clean("/tmp", cleanup.TMP_PATTERNS),
+        "cmd":      cleanup.clean_tmp,
         "timeout":  None,
         "requires": (),
         "confirm":  "Delete your own qipc* and gdm* files in /tmp that haven't "

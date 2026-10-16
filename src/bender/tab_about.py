@@ -4,6 +4,8 @@ import os
 import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
+# Import package version per CP-AutoIncrement
+from . import __version__
 
 class AboutTab(Gtk.Box):
     """
@@ -48,7 +50,11 @@ class AboutTab(Gtk.Box):
         inner.append(logos_hbox)
 
         # ── Heading / Title ──────────────────────────────────────────────────
-        lbl = Gtk.Label(label="Bender, Bite my shiny metal app! Copyright Chuck Talk, a Nordheim Online Product.", xalign=0)
+        # Display version and contact email per CP-AboutPage and CP-AutoIncrement
+        lbl = Gtk.Label(
+            label=f"Bender v{__version__} — Bite my shiny metal app!\nCopyright Chuck Talk <chuck@nordheim.online>, a Nordheim Online Product.",
+            xalign=0
+        )
         lbl.set_wrap(True)
         lbl.add_css_class("title-2")
         inner.append(lbl)

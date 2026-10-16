@@ -9,3 +9,6 @@ This package provides a unified GTK 4 and Libadwaita interface for monitoring
 system telemetry, scanning active connections, managing security audits, executing
 maintenance routines, tracking weather data, and configuring proxy utilities.
 """
+
+# Version definition per rule CP-AutoIncrement for release v0.1.13
+__version__ = "0.1.13"
