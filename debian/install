@@ -1,4 +1,12 @@
 data/com.taliskerman.bender.desktop usr/share/applications
+data/icons/hicolor/16x16/apps/com.taliskerman.bender.png usr/share/icons/hicolor/16x16/apps
+data/icons/hicolor/24x24/apps/com.taliskerman.bender.png usr/share/icons/hicolor/24x24/apps
+data/icons/hicolor/32x32/apps/com.taliskerman.bender.png usr/share/icons/hicolor/32x32/apps
+data/icons/hicolor/48x48/apps/com.taliskerman.bender.png usr/share/icons/hicolor/48x48/apps
+data/icons/hicolor/64x64/apps/com.taliskerman.bender.png usr/share/icons/hicolor/64x64/apps
+data/icons/hicolor/96x96/apps/com.taliskerman.bender.png usr/share/icons/hicolor/96x96/apps
+data/icons/hicolor/128x128/apps/com.taliskerman.bender.png usr/share/icons/hicolor/128x128/apps
+data/icons/hicolor/256x256/apps/com.taliskerman.bender.png usr/share/icons/hicolor/256x256/apps
 data/icons/hicolor/512x512/apps/com.taliskerman.bender.png usr/share/icons/hicolor/512x512/apps
 data/noln.png usr/share/bender/data
 data/noln_ui.png usr/share/bender/data
