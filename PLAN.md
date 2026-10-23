@@ -13,4 +13,13 @@
 - [x] Run polyglot shift-left static analysis and supply chain scanning (`code-gate.sh` - SonarQube, shellcheck, semgrep, osv-scanner, syft, grype all PASS)
 - [x] Execute `build_release.sh` to package, GPG sign, SHA512 hash, and stage to `/home/freecode/NOBuilds/Bender-10-16-2026-0.1.13`
 - [x] Verify all NOBuilds release artifacts (64-bit DEB, DEB.asc, SHA512, SHA512.asc, checksums.sha512, SHA512SUMS, pubkey.asc, source tarball, LICENSE, README, sbom.json, Bender_User_Guide.pdf)
-- [ ] Commit release changes, push to GitHub, and create release tag `v0.1.13`
+- [x] Commit release changes, push to GitHub, and create release tag `v0.1.13`
+
+# Plan for Bender Release v0.1.14: High-Resolution Icon Fix
+- [x] Restore pristine 512×512 master application icon (`data/icons/hicolor/512x512/apps/com.taliskerman.bender.png`).
+- [x] Generate full hicolor icon resolution suite (`16x16` through `512x512`) using Lanczos resampling.
+- [x] Update `debian/install` to distribute all 9 resolution tiers across `/usr/share/icons/hicolor/`.
+- [x] Auto-increment version to `0.1.14` across `pyproject.toml`, `src/bender/__init__.py`, `debian/changelog`, `CHANGELOG.md`, `docs/guide/Bender_User_Guide.md`.
+- [x] Run static analysis (Semgrep) and vulnerability scanning (Grype, OSV-Scanner).
+- [x] Execute `build_release.sh` to package Debian package, detached GPG sign, and stage to `/home/freecode/NOBuilds/Bender-10-23-2026-0.1.14`.
+- [x] Commit changes, tag `v0.1.14`, push to GitHub, and publish official release with all assets.

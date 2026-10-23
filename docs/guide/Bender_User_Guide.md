@@ -1,6 +1,6 @@
 title: Bender
 subtitle: Installation and User Guide
-version: 0.1.13
+version: 0.1.14
 platforms: Linux (GNOME)
 ## About Bender
 
@@ -32,10 +32,10 @@ Panels whose tool is missing tell you so instead of failing silently.
 Each release includes `bender_<version>_all.deb`, a SHA-512 checksum, detached GPG signatures and the Nordheim Online public key (`chuck_pubkey.asc`).
 
 ```
-sha512sum -c bender_0.1.13_all.deb.sha512
+sha512sum -c bender_0.1.14_all.deb.sha512
 gpg --import chuck_pubkey.asc
-gpg --verify bender_0.1.13_all.deb.asc bender_0.1.13_all.deb
-sudo apt install ./bender_0.1.13_all.deb
+gpg --verify bender_0.1.14_all.deb.asc bender_0.1.14_all.deb
+sudo apt install ./bender_0.1.14_all.deb
 ```
 
 `apt` installs the required packages and offers the recommended ones. To get every feature at once:

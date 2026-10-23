@@ -1,3 +1,11 @@
+bender (0.1.14) unstable; urgency=medium
+
+  * Restored full-resolution 512x512 master application icon.
+  * Generated and packaged full standard hicolor icon suite (16px to 512px)
+    to ensure crisp rendering across GNOME Dash, AppGrid, and Desktop.
+
+ -- Chuck Talk <chuck@nordheim.online>  Fri, 23 Oct 2026 16:35:00 -0500
+
 bender (0.1.13) unstable; urgency=medium
 
   * Maintenance actions all ask before running; package updates have no time

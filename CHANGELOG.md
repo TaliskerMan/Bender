@@ -7,6 +7,14 @@ All notable changes to the Bender project are documented in this file. This proj
 
 ---
 
+## [0.1.14] - 2026-10-23
+
+### Fixed — High-Resolution Desktop Icon
+- **Restored 512×512 Master Application Icon:** Restored the uncompressed, high-resolution master PNG asset from repository history, resolving blurry and pixelated icon rendering across GNOME Dash, AppGrid, and desktop launchers.
+- **Full Standard Hicolor Icon Suite:** Generated and packaged all standard icon resolutions (`16x16`, `24x24`, `32x32`, `48x48`, `64x64`, `96x96`, `128x128`, `256x256`, and `512x512`) via Lanczos resampling, ensuring pin-sharp display on all display scaling factors and desktop environments.
+
+---
+
 ## [0.1.13] - 2026-10-16
 
 ### Fixed — do no harm
