@@ -28,7 +28,8 @@ def _callee_name(func):
 
 def _iter_run_shell_calls():
     for path in glob.glob(os.path.join(_SRC, "*.py")):
-        tree = ast.parse(open(path).read(), filename=path)
+        with open(path, encoding="utf-8") as fh:
+            tree = ast.parse(fh.read(), filename=path)
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and _callee_name(node.func) == "run_shell":
                 yield path, node

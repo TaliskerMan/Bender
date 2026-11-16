@@ -1,6 +1,6 @@
 title: Bender
 subtitle: Installation and User Guide
-version: 0.1.14
+version: 0.1.15
 platforms: Linux (GNOME)
 ## About Bender
 

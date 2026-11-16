@@ -1,0 +1,12 @@
+# Snyk (https://snyk.io) policy file
+version: v1.25.0
+exclude:
+  global:
+    - Audit/**
+    - artifacts/**
+    - preso/**
+    - build/**
+    - dist/**
+    - .venv/**
+    - venv/**
+    - "**/__pycache__/**"

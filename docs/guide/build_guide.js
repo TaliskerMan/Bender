@@ -1,52 +1,220 @@
-// Builds a Nordheim Online user guide PDF from Markdown.
-// Usage: node build_guide.js <guide.md> <icon.png> <out.pdf>
-// Front matter (first lines):  title: / subtitle: / version: / platforms:
-const fs = require('node:fs');
-const path = require('node:path');
-const { marked } = require('marked');
-const { chromium } = require('playwright');
+/**
+ * Author: Chuck Talk, <chuck@nordheim.online>
+ * Project: Bender
+ * Purpose: Hardened user-guide PDF builder with canonical path containment and linear-time parsers.
+ * Updated: 2026-11-15
+ */
 
-const [, , MD, ICON, OUT] = process.argv;
-let src = fs.readFileSync(MD, 'utf8');
-const meta = {};
-// Parse front matter linearly without regex backtracking (Sonar S8786)
-const lines = src.split(/\r?\n/);
-let headerLines = 0;
-for (const line of lines) {
-  const colonIdx = line.indexOf(':');
-  if (colonIdx > 0 && /^\w+$/.test(line.slice(0, colonIdx))) {
-    const key = line.slice(0, colonIdx).trim();
-    const val = line.slice(colonIdx + 1).trim();
-    meta[key] = val;
-    headerLines++;
-  } else {
-    break;
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { marked } from 'marked';
+import { chromium } from 'playwright';
+
+const DIR = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = fs.realpathSync(path.resolve(DIR, '..', '..'));
+const ALLOWED_EXTENSIONS = new Set(['.md', '.png', '.pdf']);
+const CALLOUT_KINDS = ['Note', 'Tip', 'Important', 'Warning'];
+
+/**
+ * Resolves and validates that a candidate file path stays strictly within REPO_ROOT
+ * and carries an expected file extension.
+ *
+ * @param {string | undefined} rawInput Optional CLI path override resolved from caller CWD.
+ * @param {string} fallbackRelative Default path relative to DIR.
+ * @param {boolean} mustExist Whether the target file must already exist on disk.
+ * @returns {string} Canonical validated path.
+ */
+function resolveContainedPath(rawInput, fallbackRelative, mustExist = true) {
+  const candidate = rawInput
+    ? path.resolve(process.cwd(), String(rawInput))
+    : path.resolve(DIR, fallbackRelative);
+  const ext = path.extname(candidate).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    throw new Error(`Disallowed file extension for guide build path: ${ext}`);
   }
+
+  const parentDir = fs.realpathSync(path.dirname(candidate));
+  const canonicalTarget = mustExist
+    ? fs.realpathSync(candidate)
+    : path.join(parentDir, path.basename(candidate));
+
+  const relativeToRoot = path.relative(REPO_ROOT, canonicalTarget);
+  if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+    throw new Error(`Path traversal rejected outside repository root: ${canonicalTarget}`);
+  }
+  return canonicalTarget;
 }
-src = lines.slice(headerLines).join('\n');
-const iconB64 = ICON && fs.existsSync(ICON) ? fs.readFileSync(ICON).toString('base64') : '';
-const logoCandidate = path.join(__dirname, 'logo.png');
-const fallbackLogo = path.join(__dirname, '../../data/noln.png');
-const resolvedLogo = fs.existsSync(logoCandidate) ? logoCandidate : fallbackLogo;
-const logoB64 = fs.existsSync(resolvedLogo) ? fs.readFileSync(resolvedLogo).toString('base64') : '';
 
-// Callouts: lines starting with "> **Note:**" etc. render as styled blockquotes.
-let body = marked.parse(src, { mangle: false, headerIds: true });
-body = body.replace(/<thead>\s*<tr>(\s*<th[^>]*>\s*<\/th>)+\s*<\/tr>\s*<\/thead>/g, '');
-body = body.replace(/<blockquote>\s*<p><strong>(Note|Tip|Important|Warning):<\/strong>/g,
-  (m, k) => `<blockquote class="${k.toLowerCase()}"><p><strong>${k}:</strong>`);
+/**
+ * Parses top-of-file key:value metadata headers in O(n) time without backtracking regexes.
+ *
+ * @param {string} rawMarkdown Raw markdown source text.
+ * @returns {{ meta: Record<string, string>, markdownBody: string }}
+ */
+function parseFrontMatter(rawMarkdown) {
+  const meta = {};
+  const lines = rawMarkdown.split('\n');
+  let index = 0;
 
-// Table of contents from h2s
-const toc = [];
-let n = 0;
-body = body.replace(/<h2([^>]*)>(.*?)<\/h2>/g, (m, attrs, txt) => {
-  n += 1;
-  const id = 'sec' + n;
-  toc.push(`<li><span class="num">${n}</span>${txt}</li>`);
-  return `<h2 id="${id}"><span class="num">${n}</span>${txt}</h2>`;
-});
+  while (index < lines.length) {
+    const line = lines[index].endsWith('\r')
+      ? lines[index].slice(0, -1)
+      : lines[index];
+    const colonIndex = line.indexOf(':');
+    if (colonIndex <= 0) {
+      break;
+    }
+    const key = line.slice(0, colonIndex).trim();
+    if (!/^\w+$/.test(key)) {
+      break;
+    }
+    meta[key] = line.slice(colonIndex + 1).trim();
+    index += 1;
+  }
 
-const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+  return {
+    meta,
+    markdownBody: lines.slice(index).join('\n'),
+  };
+}
+
+/**
+ * Strips HTML tags in linear O(n) time without regex backtracking.
+ *
+ * @param {string} input Input string that may contain angle-bracket markup.
+ * @returns {string} Plain text with tags removed.
+ */
+function stripHtmlTags(input) {
+  let output = '';
+  let insideTag = false;
+  for (const ch of String(input)) {
+    if (ch === '<') {
+      insideTag = true;
+    } else if (ch === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      output += ch;
+    }
+  }
+  return output;
+}
+
+/**
+ * Removes empty table headers (`<thead><tr><th></th>...</tr></thead>`) in O(n) time.
+ *
+ * @param {string} html Rendered HTML string.
+ * @returns {string} HTML without empty table header blocks.
+ */
+function removeEmptyTableHeaders(html) {
+  const openTag = '<thead>';
+  const closeTag = '</thead>';
+  let result = '';
+  let cursor = 0;
+
+  while (cursor < html.length) {
+    const start = html.indexOf(openTag, cursor);
+    if (start === -1) {
+      result += html.slice(cursor);
+      break;
+    }
+    const end = html.indexOf(closeTag, start + openTag.length);
+    if (end === -1) {
+      result += html.slice(cursor);
+      break;
+    }
+    result += html.slice(cursor, start);
+    const inner = html.slice(start + openTag.length, end);
+    if (stripHtmlTags(inner).trim().length > 0) {
+      result += html.slice(start, end + closeTag.length);
+    }
+    cursor = end + closeTag.length;
+  }
+
+  return result;
+}
+
+/**
+ * Adds callout classes to blockquotes starting with `<strong>Note:</strong>` etc.
+ *
+ * @param {string} html Rendered HTML string.
+ * @returns {string} HTML with styled callout blockquotes.
+ */
+function styleCalloutBlockquotes(html) {
+  let updated = html;
+  for (const kind of CALLOUT_KINDS) {
+    const lower = kind.toLowerCase();
+    const needle = `<p><strong>${kind}:</strong>`;
+    updated = updated
+      .split(`<blockquote>\n${needle}`)
+      .join(`<blockquote class="${lower}">\n${needle}`)
+      .split(`<blockquote>${needle}`)
+      .join(`<blockquote class="${lower}">${needle}`);
+  }
+  return updated;
+}
+
+/**
+ * Numbers `<h2>` sections and builds the table of contents in linear O(n) time.
+ *
+ * @param {string} html Rendered HTML string.
+ * @returns {{ html: string, tocHtml: string }}
+ */
+function injectHeadingIdsAndBuildToc(html) {
+  const toc = [];
+  let sectionNum = 0;
+  let result = '';
+  let cursor = 0;
+
+  while (cursor < html.length) {
+    const h2Start = html.indexOf('<h2', cursor);
+    if (h2Start === -1) {
+      result += html.slice(cursor);
+      break;
+    }
+    const openEnd = html.indexOf('>', h2Start + 3);
+    const closeStart = openEnd === -1 ? -1 : html.indexOf('</h2>', openEnd + 1);
+    if (openEnd === -1 || closeStart === -1) {
+      result += html.slice(cursor);
+      break;
+    }
+
+    result += html.slice(cursor, h2Start);
+    const innerText = html.slice(openEnd + 1, closeStart);
+    sectionNum += 1;
+    const sectionId = `sec${sectionNum}`;
+    toc.push(`<li><span class="num">${sectionNum}</span>${innerText}</li>`);
+    result += `<h2 id="${sectionId}"><span class="num">${sectionNum}</span>${innerText}</h2>`;
+    cursor = closeStart + 5;
+  }
+
+  return { html: result, tocHtml: toc.join('') };
+}
+
+const mdPath = resolveContainedPath(process.argv[2], 'Bender_User_Guide.md', true);
+const iconPath = resolveContainedPath(process.argv[3], '../../data/bender.png', true);
+const outPath = resolveContainedPath(process.argv[4], '../Bender_User_Guide.pdf', false);
+const primaryLogoPath = path.resolve(DIR, 'logo.png');
+const logoPath = fs.existsSync(primaryLogoPath)
+  ? resolveContainedPath(undefined, 'logo.png', true)
+  : resolveContainedPath(undefined, '../../data/noln.png', true);
+
+const rawSource = fs.readFileSync(mdPath, 'utf8');
+const { meta, markdownBody } = parseFrontMatter(rawSource);
+const iconB64 = fs.readFileSync(iconPath).toString('base64');
+const logoB64 = fs.readFileSync(logoPath).toString('base64');
+
+const rawHtml = marked.parse(markdownBody, { mangle: false, headerIds: true });
+const withoutEmptyHeaders = removeEmptyTableHeaders(String(rawHtml));
+const withCallouts = styleCalloutBlockquotes(withoutEmptyHeaders);
+const { html: bodyHtml, tocHtml } = injectHeadingIdsAndBuildToc(withCallouts);
+
+const cleanTitle = stripHtmlTags(meta.title || 'Bender');
+const cleanSubtitle = stripHtmlTags(meta.subtitle || 'Installation and User Guide');
+const cleanVersion = stripHtmlTags(meta.version || '0.1.15');
+const cleanPlatforms = stripHtmlTags(meta.platforms || 'Linux (GNOME)');
+
+const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><style>
 @page { size: Letter; margin: 0.8in 0.85in 0.9in 0.85in; }
 :root { --navy:#0E1E4A; --blue:#1F5FE6; --ink:#1f2937; --muted:#5b6475; --rule:#dce3ee; --tint:#eef3fc; }
 * { box-sizing: border-box; }
@@ -82,46 +250,35 @@ blockquote.warning, blockquote.important { border-left-color: #c2410c; backgroun
 strong { color: var(--navy); }
 </style></head><body>
 <section class="cover">
-  <div class="top"><img src="data:image/png;base64,${logoB64}"></div>
+  <div class="top"><img src="data:image/png;base64,${logoB64}" alt="Nordheim Online"></div>
   <div class="mid">
-    <img class="icon" src="data:image/png;base64,${iconB64}">
-    <h1>${meta.title}</h1>
-    <p class="sub">${meta.subtitle}</p>
+    <img class="icon" src="data:image/png;base64,${iconB64}" alt="${cleanTitle}">
+    <h1>${cleanTitle}</h1>
+    <p class="sub">${cleanSubtitle}</p>
   </div>
   <div class="meta">
-    <b>Version</b> ${meta.version} &nbsp;·&nbsp; <b>Platforms</b> ${meta.platforms} &nbsp;·&nbsp; <b>Updated</b> October 2026<br>
+    <b>Version</b> ${cleanVersion} &nbsp;·&nbsp; <b>Platforms</b> ${cleanPlatforms} &nbsp;·&nbsp; <b>Updated</b> November 2026<br>
     Nordheim Online, LLC · nordheim.online · support@nordheim.online
   </div>
 </section>
-<section class="toc"><h2 style="page-break-before:auto">Contents</h2><ol>${toc.join('')}</ol></section>
-${body}
+<section class="toc"><h2 style="page-break-before:auto">Contents</h2><ol>${tocHtml}</ol></section>
+${bodyHtml}
 </body></html>`;
 
-// Generate PDF via Playwright (using top-level await per Sonar S7785)
-async function renderPdf() {
-  const browser = await chromium.launch();
+const browser = await chromium.launch();
+try {
   const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'load' });
-  let cleanTitle = meta.title || '';
-  while (cleanTitle.includes('<') && cleanTitle.includes('>')) {
-    const start = cleanTitle.indexOf('<');
-    const end = cleanTitle.indexOf('>', start);
-    if (end === -1) break;
-    cleanTitle = cleanTitle.slice(0, start) + cleanTitle.slice(end + 1);
-  }
+  await page.setContent(documentHtml, { waitUntil: 'load' });
   await page.pdf({
-    path: OUT, format: 'Letter', printBackground: true, displayHeaderFooter: true,
+    path: outPath,
+    format: 'Letter',
+    printBackground: true,
+    displayHeaderFooter: true,
     headerTemplate: '<div></div>',
-    footerTemplate: `<div style="font-family:Arial;font-size:8px;color:#6a7385;width:100%;padding:0 0.85in;display:flex;justify-content:space-between;"><span>${cleanTitle} · ${meta.version}</span><span class="pageNumber"></span></div>`,
+    footerTemplate: `<div style="font-family:Arial;font-size:8px;color:#6a7385;width:100%;padding:0 0.85in;display:flex;justify-content:space-between;"><span>${cleanTitle} · ${cleanVersion}</span><span class="pageNumber"></span></div>`,
     margin: { top: '0.8in', bottom: '0.9in', left: '0.85in', right: '0.85in' },
   });
+  console.log('wrote', outPath);
+} finally {
   await browser.close();
-  console.log('wrote', OUT);
-}
-
-try {
-  await renderPdf();
-} catch (err) {
-  console.error('Failed to generate PDF guide:', err);
-  process.exitCode = 1;
 }

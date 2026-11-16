@@ -7,6 +7,17 @@ All notable changes to the Bender project are documented in this file. This proj
 
 ---
 
+## [0.1.15] - 2026-11-15
+
+### Security & Hardening
+- **SonarQube Cloud & Jira Remediation (`TaliskerMan_Bender`):** Resolved all 17 SonarQube Cloud findings (`5 × shell:S7688`, `4 × shell:S6573`, `2 × jssecurity:S8707`, `3 × python:S9073`, `githubactions:S8541`, `githubactions:S8544`, and `text:S8565`).
+- **Diagnostic Log Hardening (`src/bender/main.py`):** Enforced owner-only permissions (`0700` directory, `0600` `bender.log`), 5 MiB size-bounded rotation (`RotatingFileHandler`), and CR/LF/control-character sanitization (`sanitize_log_message`).
+- **User Guide Builder Hardening (`docs/guide/build_guide.js`):** Migrated to ESM (`"type": "module"`) with `node:` imports, canonical `resolveContainedPath()` path-traversal containment inside `REPO_ROOT`, linear-time $O(n)$ parsers, and `try / finally` browser cleanup.
+- **Supply Chain & CI Pinning:** Added pinned `requirements.txt` (`text:S8565`) and SHA-256 hash-locked `requirements-dev.txt` (`--only-binary :all: --require-hashes`), SHA-pinned `.github/workflows/ci.yml`, `.sonarcloud.properties`, `sonar-project.properties`, `.snyk`, `.dcignore`, and regenerated path-sanitized CycloneDX SBOMs (`0` host paths, `0` Grype/Trivy vulnerabilities).
+- **Headless GTK4 Test Safety (`src/bender/tab_about.py`, `tests/test_ui_logic.py`):** Extracted pure `get_about_heading()` and `get_license_text()` helpers so all 37 unit tests run deterministically in headless CI and sandbox environments without triggering GTK4 C-level aborts.
+
+---
+
 ## [0.1.14] - 2026-10-23
 
 ### Fixed — High-Resolution Desktop Icon

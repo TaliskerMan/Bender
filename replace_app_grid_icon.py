@@ -1,19 +1,18 @@
-# Copyright (C) 2026 Chuck Talk <cwtalk1@gmail.com>
+#!/usr/bin/env python3
+# Copyright (C) 2026 Chuck Talk <chuck@nordheim.online>
 # This file is part of Bender.
 #
 # Bender is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
+# it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, version 3.
 #
 # Bender is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY. See the GNU AGPL v3 for details.
+# but WITHOUT ANY WARRANTY. See the GNU GPL v3 for details.
 
-#!/usr/bin/env python3
+import argparse
 import os
 import shutil
-import glob
 import subprocess
-import argparse
 # B-02 FIX: defusedxml prevents XXE and Billion-Laughs DoS attacks when parsing
 # untrusted SVG/XML input (CWE-611). It is a drop-in replacement for
 # xml.etree.ElementTree and is declared as a hard dependency in pyproject.toml.

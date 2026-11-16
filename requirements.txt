@@ -1,2 +1,3 @@
-PyGObject
-defusedxml
+# Pinned runtime dependencies for Bender v0.1.15+ (SonarQube Cloud text:S8565).
+PyGObject==3.54.5
+defusedxml==0.7.1

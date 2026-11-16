@@ -19,7 +19,7 @@ try:
 except (ImportError, ValueError):
     pytest.skip("GTK 4 / Libadwaita bindings not installed", allow_module_level=True)
 
-from bender import runner, tab_maintenance, tab_network, tab_weather  # noqa: E402
+from bender import __version__, main as bender_main, runner, tab_about, tab_maintenance, tab_network, tab_weather  # noqa: E402
 
 
 def test_every_maintenance_action_asks_first():
@@ -37,8 +37,11 @@ def test_updates_have_no_time_limit():
 def test_system_update_is_non_interactive_and_keeps_configs():
     script = tab_maintenance.SYSTEM_UPDATE_SCRIPT
     assert "DEBIAN_FRONTEND=noninteractive" in script
-    assert "--force-confold" in script and "--force-confdef" in script
-    assert "nala" in script and "apt-get" in script
+    # Remediated (python:S9073): Separate composite assertions into single assertions.
+    assert "--force-confold" in script
+    assert "--force-confdef" in script
+    assert "nala" in script
+    assert "apt-get" in script
 
 
 def test_shared_memory_clean_up_runs_without_root():
@@ -47,9 +50,15 @@ def test_shared_memory_clean_up_runs_without_root():
 
 
 def test_result_text_shows_failures():
-    text = tab_maintenance.format_result("", "Error executing command as another "
-                                         "user: Request dismissed", 126, privileged=True)
-    assert "dismissed" in text and text.endswith("prompt was dismissed.")
+    text = tab_maintenance.format_result(
+        "",
+        "Error executing command as another user: Request dismissed",
+        126,
+        privileged=True,
+    )
+    # Remediated (python:S9073): Separate composite assertion into single assertions.
+    assert "dismissed" in text
+    assert text.endswith("prompt was dismissed.")
     assert tab_maintenance.format_result("done", "", 0).endswith("Finished.")
     assert "exit code 2" in tab_maintenance.format_result("partial", "boom", 2)
 
@@ -63,12 +72,16 @@ def test_runner_timeout_and_stdin(monkeypatch):
         class R:
             stdout = stderr = ""
             returncode = 0
+
         return R()
 
     monkeypatch.setattr(runner.subprocess, "run", fake_run)
     monkeypatch.setattr(runner.GLib, "idle_add", lambda *a: None)
-    monkeypatch.setattr(runner.threading, "Thread",
-                        lambda target, daemon: type("T", (), {"start": lambda s: target()})())
+    monkeypatch.setattr(
+        runner.threading,
+        "Thread",
+        lambda target, daemon: type("T", (), {"start": lambda s: target()})(),
+    )
     runner.CommandRunner.run(["true"], lambda *a: None, timeout=None)
     assert captured["timeout"] is None
     assert captured["stdin"] is runner.subprocess.DEVNULL
@@ -79,7 +92,11 @@ def test_port_checker_text():
     shown = tab_network.describe_port("22", "LISTEN 0 128 0.0.0.0:22 0.0.0.0:*", "", 0)
     assert "another user" in shown
     own = tab_network.describe_port(
-        "8000", 'LISTEN 0 5 127.0.0.1:8000 0.0.0.0:* users:(("python3",pid=1,fd=3))', "", 0)
+        "8000",
+        'LISTEN 0 5 127.0.0.1:8000 0.0.0.0:* users:(("python3",pid=1,fd=3))',
+        "",
+        0,
+    )
     assert "another user" not in own
 
 
@@ -92,22 +109,26 @@ def test_weather_location_is_remembered_privately(tmp_path, monkeypatch):
     assert mode == 0o600
 
 
+def test_logging_sanitization_and_permissions(tmp_path):
+    sanitized = bender_main.sanitize_log_message("Line1\n[ERROR] forged\r\x00tail")
+    assert "\n" not in sanitized
+    assert "\r" not in sanitized
+    assert sanitized == "Line1 [ERROR] forged tail"
+
+    log_file = bender_main.setup_logging(state_root=tmp_path)
+    assert log_file.exists()
+    dir_mode = os.stat(log_file.parent).st_mode & 0o777
+    file_mode = os.stat(log_file).st_mode & 0o777
+    assert dir_mode == 0o700
+    assert file_mode == 0o600
+
+
 def test_about_tab_compliance():
     """Verify About tab contains copyright Chuck Talk, email, and version per CP-AboutPage and CP-AutoIncrement."""
-    from bender import tab_about, __version__
-    about = tab_about.AboutTab()
-    labels = []
-
-    def collect_labels(widget):
-        if isinstance(widget, Gtk.Label):
-            labels.append(widget.get_label())
-        child = widget.get_first_child()
-        while child:
-            collect_labels(child)
-            child = child.get_next_sibling()
-
-    collect_labels(about)
-    label_text = " ".join(labels)
-    assert "Chuck Talk" in label_text
-    assert "chuck@nordheim.online" in label_text
-    assert __version__ in label_text
+    heading = tab_about.get_about_heading()
+    license_text = tab_about.get_license_text()
+    assert "Chuck Talk" in heading
+    assert "chuck@nordheim.online" in heading
+    assert "support@nordheim.online" in heading
+    assert __version__ in heading
+    assert "GNU General Public License" in license_text

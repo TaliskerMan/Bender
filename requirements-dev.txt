@@ -1,0 +1,25 @@
+# Cross-platform development & quality-gate dependencies (Bender v0.1.15+).
+# Remediated (SonarQube Cloud githubactions:S8541 & githubactions:S8544):
+# Full direct + transitive wheel SHA-256 hash lockfile for `--only-binary :all: --require-hashes`.
+
+coverage==7.17.3 \
+    --hash=sha256:0860a5f27ceccd53ee4070acc182588ed4f15b7401cdcca09d8c0cece9c2ad7d \
+    --hash=sha256:61138b3a51d91ee443b04962ec9990fa140208a7a082b1754135ebd1378a420f \
+    --hash=sha256:84b5a474040b33f3d805c0b19fadf5a2e78fdd46e0bcb8b813631e5cac64195e \
+    --hash=sha256:203aa5e42c88e9accfa18a0cc91950499efaa5b179a1da14bcbf5b995afdbcb6 \
+    --hash=sha256:21745c08f2835b847a16887b748d3084dddeb0571ae2a0d62e33644413568b99
+iniconfig==2.3.1 \
+    --hash=sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7
+packaging==26.3 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pluggy==1.7.0 \
+    --hash=sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec
+pygments==2.21.0 \
+    --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9
+pytest==9.2.0 \
+    --hash=sha256:07acdcf88ec174f907dc01af70bf52d49b014bbab03faeeade31c96b18c2e588
+pytest-cov==7.1.0 \
+    --hash=sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678
+ruff==0.17.5 \
+    --hash=sha256:40ca8afaac309b41a5b2e09e4e7beb1f824826b93c25697c4d74f573324fba4e \
+    --hash=sha256:6f0db748508f04a04e3fbebcc636a5c8b3bd76274f8ed28f497c44d75c2ea2d7

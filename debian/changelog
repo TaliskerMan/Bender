@@ -1,3 +1,15 @@
+bender (0.1.15) unstable; urgency=medium
+
+  * Remediated all 17 SonarQube Cloud issues across build_release.sh,
+    docs/guide/build_guide.js, tests/test_ui_logic.py, .github/workflows/ci.yml,
+    and pyproject.toml / requirements.txt (v0.1.15).
+  * Hardened application diagnostic logging with owner-only permissions
+    (0700/0600), 5 MiB rotation, and CR/LF control-character sanitization.
+  * Extracted pure AboutTab helpers for headless-safe unit testing and
+    normalized copyright/license headers across utility scripts.
+
+ -- Chuck Talk <chuck@nordheim.online>  Sun, 15 Nov 2026 19:25:00 -0600
+
 bender (0.1.14) unstable; urgency=medium
 
   * Restored full-resolution 512x512 master application icon.

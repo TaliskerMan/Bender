@@ -70,7 +70,12 @@ artifacts/
 # ---- Vendored tool binaries ----
 bin/
 
-# ---- macOS cruft ----
+# ---- macOS & scanner cruft ----
 .DS_Store
-sonar-project.properties
 .scannerwork/
+.coverage
+coverage.xml
+*.bak
+*.orig
+*~
+preso/

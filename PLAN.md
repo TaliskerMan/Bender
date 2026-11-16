@@ -1,3 +1,14 @@
+# Plan for Bender Release v0.1.15: SonarQube Cloud & ShadowAgent Remediation
+- [x] Create `Sonar` branch (`TaliskerMan_Bender`) and gather all 17 SonarQube Cloud and Jira issues.
+- [x] Remediate `build_release.sh` and `run.sh` (`5 × shell:S7688`, `4 × shell:S6573`, `0` `shellcheck` warnings).
+- [x] Remediate `docs/guide/build_guide.js` and `docs/guide/package.json` (`2 × jssecurity:S8707`, ESM `node:` imports, linear-time $O(n)$ parsers).
+- [x] Remediate `tests/test_ui_logic.py` (`3 × python:S9073` composite assertions) and extract pure `tab_about` helpers for headless GTK4 test safety (37/37 tests passing).
+- [x] Remediate `.github/workflows/ci.yml`, `requirements.txt`, and `requirements-dev.txt` (`githubactions:S8541`, `githubactions:S8544`, `text:S8565`).
+- [x] Harden `src/bender/main.py` with `0700`/`0600` rotated, sanitized diagnostic logging and normalize headers in `data/fix_logo.py` and `replace_app_grid_icon.py`.
+- [x] Add `.sonarcloud.properties`, tracked `sonar-project.properties`, `.sonarlint/connectedMode.json`, `.snyk`, and `.dcignore`.
+- [x] Regenerate path-sanitized CycloneDX SBOMs (`Audit/SBOM-Linux.json`, `Audit/SBOM-Linux`, `Audit/sbom.json`) and verify 0 vulnerabilities with Grype and Trivy.
+- [x] Verify live SonarQube Cloud Quality Gate (`TaliskerMan_Bender` `PASSED`, `0` issues) and merge `Sonar` into `main`.
+
 # Plan for Bender Release v0.1.13
 
 - [x] Merge fix/claims-vs-code to main
