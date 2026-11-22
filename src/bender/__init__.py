@@ -10,5 +10,5 @@ system telemetry, scanning active connections, managing security audits, executi
 maintenance routines, tracking weather data, and configuring proxy utilities.
 """
 
-# Version definition per rule CP-AutoIncrement for release v0.1.15
-__version__ = "0.1.15"
+# Version definition per rule CP-AutoIncrement for release v0.1.16 (BEN-12 Snyk remediation)
+__version__ = "0.1.16"

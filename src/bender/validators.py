@@ -15,6 +15,8 @@ command construction) and the Steven Black hosts parser can be unit-tested
 without a GTK display.
 """
 
+import os
+from pathlib import Path
 import re
 
 # A conservative allowlist: letters, digits, dots and hyphens only — no shell
@@ -95,3 +97,41 @@ def merge_blocklists(existing: str, downloaded: list) -> str:
     added = [domain for domain in downloaded if domain not in present]
     merged = lines + added
     return "\n".join(merged) + "\n" if merged else ""
+
+
+# Change Comment (2026-11-21, BEN-12 / Snyk python/PT CWE-23 / CP-ChangeComments):
+# Added canonical XDG base-directory resolver enforcing absolute-path validation,
+# `..` segment rejection, and containment of the application subdirectory within
+# the selected XDG base directory.
+def resolve_safe_xdg_dir(
+    env_var: str,
+    default_rel: str,
+    app_subdir: str = "bender",
+) -> Path:
+    """Resolve an XDG directory (`XDG_CONFIG_HOME`, `XDG_STATE_HOME`) safely.
+
+    Follows the XDG Base Directory Specification by ignoring empty, relative,
+    NUL-containing, or `..`-traversing environment values. Absolute values may
+    point outside the user's home directory; the application subdirectory is
+    kept within the selected canonical base directory.
+    """
+    home_root = os.path.realpath(os.path.expanduser("~"))
+    fallback_base = os.path.realpath(os.path.join(home_root, default_rel))
+
+    raw_value = os.environ.get(env_var, "")
+    chosen_base = fallback_base
+    if (
+        raw_value
+        and "\x00" not in raw_value
+        and os.path.isabs(raw_value)
+        and ".." not in Path(raw_value).parts
+    ):
+        chosen_base = os.path.realpath(raw_value)
+
+    target_real = os.path.realpath(os.path.join(chosen_base, app_subdir))
+    if (
+        os.path.commonpath([chosen_base, target_real]) != chosen_base
+        or not target_real.startswith(chosen_base + os.sep)
+    ):
+        target_real = os.path.realpath(os.path.join(fallback_base, app_subdir))
+    return Path(target_real)

@@ -1,3 +1,10 @@
+# Plan for Bender Release v0.1.16: Snyk Code Path Traversal Remediation (`BEN-12`)
+- [x] Create branch `fix/BEN-12-snyk-path-traversal` from `origin/main` (`b77ff60`).
+- [x] Add `resolve_safe_xdg_dir()` in `src/bender/validators.py` enforcing canonical `os.path.commonpath` containment on `XDG_STATE_HOME` and `XDG_CONFIG_HOME` (`CWE-23`).
+- [x] Harden `setup_logging()` in `src/bender/main.py` (`3 × python/PT`) and `_settings_path()` in `src/bender/tab_weather.py` (`2 × python/PT`).
+- [x] Add `TestResolveSafeXdgDir` regression tests in `tests/test_validators.py` and verify `pytest`, `ruff`, and `snyk code test` (`0` findings).
+- [x] Auto-increment version to `0.1.16` across package metadata, docs, and changelog (`CP-AutoIncrement`), push branch, and open GitHub Pull Request for `BEN-12`.
+
 # Plan for Bender Release v0.1.15: SonarQube Cloud & ShadowAgent Remediation
 - [x] Create `Sonar` branch (`TaliskerMan_Bender`) and gather all 17 SonarQube Cloud and Jira issues.
 - [x] Remediate `build_release.sh` and `run.sh` (`5 × shell:S7688`, `4 × shell:S6573`, `0` `shellcheck` warnings).

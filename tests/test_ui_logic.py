@@ -109,6 +109,19 @@ def test_weather_location_is_remembered_privately(tmp_path, monkeypatch):
     assert mode == 0o600
 
 
+def test_weather_settings_symlink_is_ignored(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    external_settings = tmp_path / "external-weather.json"
+    external_settings.write_text('{"location": "External", "metric": true}')
+    settings_dir = tmp_path / "bender"
+    settings_dir.mkdir()
+    (settings_dir / "weather.json").symlink_to(external_settings)
+
+    assert tab_weather.load_weather_settings() == {"location": "", "metric": False}
+    tab_weather.save_weather_settings("Austin,TX,USA", True)
+    assert external_settings.read_text() == '{"location": "External", "metric": true}'
+
+
 def test_logging_sanitization_and_permissions(tmp_path):
     sanitized = bender_main.sanitize_log_message("Line1\n[ERROR] forged\r\x00tail")
     assert "\n" not in sanitized
@@ -121,6 +134,17 @@ def test_logging_sanitization_and_permissions(tmp_path):
     file_mode = os.stat(log_file).st_mode & 0o777
     assert dir_mode == 0o700
     assert file_mode == 0o600
+
+
+def test_logging_symlink_falls_back_to_stream(tmp_path):
+    state_dir = tmp_path / "bender"
+    state_dir.mkdir()
+    external_log = tmp_path / "external.log"
+    external_log.write_text("existing log")
+    (state_dir / "bender.log").symlink_to(external_log)
+
+    assert bender_main.setup_logging(state_root=tmp_path) is None
+    assert external_log.read_text() == "existing log"
 
 
 def test_about_tab_compliance():

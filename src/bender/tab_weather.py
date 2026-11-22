@@ -22,12 +22,21 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw
 from .runner import CommandRunner
-from .validators import is_valid_city
+from .validators import is_valid_city, resolve_safe_xdg_dir
 
 
+# Change Comment (2026-11-21, BEN-12 / Snyk python/PT CWE-23 / CP-ChangeComments):
+# Resolved `XDG_CONFIG_HOME` through `resolve_safe_xdg_dir` and verified strict
+# prefix containment on `weather.json` prior to reading or writing settings.
 def _settings_path() -> str:
-    base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
-    return os.path.join(base, "bender", "weather.json")
+    """Return the canonical, traversal-safe path to `weather.json`."""
+    config_dir = os.fspath(
+        resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")
+    )
+    settings_real = os.path.realpath(os.path.join(config_dir, "weather.json"))
+    if not settings_real.startswith(config_dir + os.sep):
+        raise ValueError("Resolved weather settings path escaped config directory")
+    return settings_real
 
 
 def load_weather_settings() -> dict:
@@ -46,13 +55,13 @@ def load_weather_settings() -> dict:
 
 def save_weather_settings(location: str, metric: bool) -> None:
     """Remember the location (kept only on this computer, readable only by you)."""
-    path = _settings_path()
     try:
+        path = _settings_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump({"location": location, "metric": metric}, fh)
-    except OSError:
+    except (OSError, ValueError):
         pass
 
 
