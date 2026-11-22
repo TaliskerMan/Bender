@@ -18,7 +18,6 @@ without a GTK display.
 import os
 from pathlib import Path
 import re
-import tempfile
 
 # A conservative allowlist: letters, digits, dots and hyphens only — no shell
 # metacharacters, spaces, or slashes can pass. The first character must be a
@@ -102,8 +101,8 @@ def merge_blocklists(existing: str, downloaded: list) -> str:
 
 # Change Comment (2026-11-21, BEN-12 / Snyk python/PT CWE-23 / CP-ChangeComments):
 # Added canonical XDG base-directory resolver enforcing absolute-path validation,
-# `..` segment rejection, and `os.path.commonpath` containment under the user's
-# canonical home directory (or system temp root during isolated test runs).
+# `..` segment rejection, and containment of the application subdirectory within
+# the selected XDG base directory.
 def resolve_safe_xdg_dir(
     env_var: str,
     default_rel: str,
@@ -112,12 +111,11 @@ def resolve_safe_xdg_dir(
     """Resolve an XDG directory (`XDG_CONFIG_HOME`, `XDG_STATE_HOME`) safely.
 
     Follows the XDG Base Directory Specification by ignoring empty, relative,
-    NUL-containing, or `..`-traversing environment values and enforcing
-    canonical containment within the user's home directory (or system temp
-    directory for isolated test sandboxes).
+    NUL-containing, or `..`-traversing environment values. Absolute values may
+    point outside the user's home directory; the application subdirectory is
+    kept within the selected canonical base directory.
     """
     home_root = os.path.realpath(os.path.expanduser("~"))
-    temp_root = os.path.realpath(tempfile.gettempdir())
     fallback_base = os.path.realpath(os.path.join(home_root, default_rel))
 
     raw_value = os.environ.get(env_var, "")
@@ -128,11 +126,7 @@ def resolve_safe_xdg_dir(
         and os.path.isabs(raw_value)
         and ".." not in Path(raw_value).parts
     ):
-        candidate_base = os.path.realpath(raw_value)
-        for allowed_root in (home_root, temp_root):
-            if os.path.commonpath([allowed_root, candidate_base]) == allowed_root:
-                chosen_base = candidate_base
-                break
+        chosen_base = os.path.realpath(raw_value)
 
     target_real = os.path.realpath(os.path.join(chosen_base, app_subdir))
     if (

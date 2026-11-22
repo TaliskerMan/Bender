@@ -121,10 +121,16 @@ class TestResolveSafeXdgDir:
         resolved = resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")
         assert resolved == (tmp_path / "bender").resolve()
 
+    def test_accepts_absolute_xdg_path_outside_home(self, monkeypatch):
+        xdg_config = "/outside/xdg-config"
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_config)
+        resolved = resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")
+        assert os.fspath(resolved) == os.path.realpath(os.path.join(xdg_config, "bender"))
+
     def test_rejects_relative_and_traversal_xdg_paths(self, monkeypatch):
         expected_fallback = (
             os.path.realpath(os.path.join(os.path.expanduser("~"), ".config", "bender"))
         )
-        for unsafe in ["relative/config", "/tmp/../etc", "/etc/shadow", "../../outside"]:
+        for unsafe in ["relative/config", "/tmp/../etc", "../../outside"]:
             monkeypatch.setenv("XDG_CONFIG_HOME", unsafe)
             assert os.fspath(resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")) == expected_fallback

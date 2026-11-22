@@ -55,13 +55,13 @@ def load_weather_settings() -> dict:
 
 def save_weather_settings(location: str, metric: bool) -> None:
     """Remember the location (kept only on this computer, readable only by you)."""
-    path = _settings_path()
     try:
+        path = _settings_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump({"location": location, "metric": metric}, fh)
-    except OSError:
+    except (OSError, ValueError):
         pass
 
 
