@@ -1,3 +1,12 @@
+bender (0.1.16) unstable; urgency=medium
+
+  * Remediated all 5 Snyk Code Path Traversal (python/PT, CWE-23) findings
+    across src/bender/main.py and src/bender/tab_weather.py via shared
+    canonical XDG containment helper resolve_safe_xdg_dir (BEN-12).
+  * Added XDG traversal regression unit tests in tests/test_validators.py.
+
+ -- Chuck Talk <chuck@nordheim.online>  Sat, 21 Nov 2026 19:26:00 -0600
+
 bender (0.1.15) unstable; urgency=medium
 
   * Remediated all 17 SonarQube Cloud issues across build_release.sh,

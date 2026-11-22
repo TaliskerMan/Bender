@@ -14,6 +14,7 @@ from bender.validators import (  # noqa: E402
     merge_blocklists,
     parse_hosts_blocklist,
     parse_tinyproxy_conf,
+    resolve_safe_xdg_dir,
 )
 
 
@@ -110,3 +111,20 @@ class TestMergeBlocklists:
 
     def test_empty_existing(self):
         assert merge_blocklists("", ["a.com"]) == "a.com\n"
+
+
+class TestResolveSafeXdgDir:
+    """Verify XDG base directory traversal hardening (BEN-12 / CWE-23)."""
+
+    def test_accepts_sandboxed_temp_xdg_path(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        resolved = resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")
+        assert resolved == (tmp_path / "bender").resolve()
+
+    def test_rejects_relative_and_traversal_xdg_paths(self, monkeypatch):
+        expected_fallback = (
+            os.path.realpath(os.path.join(os.path.expanduser("~"), ".config", "bender"))
+        )
+        for unsafe in ["relative/config", "/tmp/../etc", "/etc/shadow", "../../outside"]:
+            monkeypatch.setenv("XDG_CONFIG_HOME", unsafe)
+            assert os.fspath(resolve_safe_xdg_dir("XDG_CONFIG_HOME", ".config", "bender")) == expected_fallback

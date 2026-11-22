@@ -15,7 +15,10 @@ command construction) and the Steven Black hosts parser can be unit-tested
 without a GTK display.
 """
 
+import os
+from pathlib import Path
 import re
+import tempfile
 
 # A conservative allowlist: letters, digits, dots and hyphens only — no shell
 # metacharacters, spaces, or slashes can pass. The first character must be a
@@ -95,3 +98,46 @@ def merge_blocklists(existing: str, downloaded: list) -> str:
     added = [domain for domain in downloaded if domain not in present]
     merged = lines + added
     return "\n".join(merged) + "\n" if merged else ""
+
+
+# Change Comment (2026-11-21, BEN-12 / Snyk python/PT CWE-23 / CP-ChangeComments):
+# Added canonical XDG base-directory resolver enforcing absolute-path validation,
+# `..` segment rejection, and `os.path.commonpath` containment under the user's
+# canonical home directory (or system temp root during isolated test runs).
+def resolve_safe_xdg_dir(
+    env_var: str,
+    default_rel: str,
+    app_subdir: str = "bender",
+) -> Path:
+    """Resolve an XDG directory (`XDG_CONFIG_HOME`, `XDG_STATE_HOME`) safely.
+
+    Follows the XDG Base Directory Specification by ignoring empty, relative,
+    NUL-containing, or `..`-traversing environment values and enforcing
+    canonical containment within the user's home directory (or system temp
+    directory for isolated test sandboxes).
+    """
+    home_root = os.path.realpath(os.path.expanduser("~"))
+    temp_root = os.path.realpath(tempfile.gettempdir())
+    fallback_base = os.path.realpath(os.path.join(home_root, default_rel))
+
+    raw_value = os.environ.get(env_var, "")
+    chosen_base = fallback_base
+    if (
+        raw_value
+        and "\x00" not in raw_value
+        and os.path.isabs(raw_value)
+        and ".." not in Path(raw_value).parts
+    ):
+        candidate_base = os.path.realpath(raw_value)
+        for allowed_root in (home_root, temp_root):
+            if os.path.commonpath([allowed_root, candidate_base]) == allowed_root:
+                chosen_base = candidate_base
+                break
+
+    target_real = os.path.realpath(os.path.join(chosen_base, app_subdir))
+    if (
+        os.path.commonpath([chosen_base, target_real]) != chosen_base
+        or not target_real.startswith(chosen_base + os.sep)
+    ):
+        target_real = os.path.realpath(os.path.join(fallback_base, app_subdir))
+    return Path(target_real)

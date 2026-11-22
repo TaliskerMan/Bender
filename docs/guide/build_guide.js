@@ -211,7 +211,7 @@ const { html: bodyHtml, tocHtml } = injectHeadingIdsAndBuildToc(withCallouts);
 
 const cleanTitle = stripHtmlTags(meta.title || 'Bender');
 const cleanSubtitle = stripHtmlTags(meta.subtitle || 'Installation and User Guide');
-const cleanVersion = stripHtmlTags(meta.version || '0.1.15');
+const cleanVersion = stripHtmlTags(meta.version || '0.1.16');
 const cleanPlatforms = stripHtmlTags(meta.platforms || 'Linux (GNOME)');
 
 const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><style>

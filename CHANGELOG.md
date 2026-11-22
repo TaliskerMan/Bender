@@ -7,6 +7,14 @@ All notable changes to the Bender project are documented in this file. This proj
 
 ---
 
+## [0.1.16] - 2026-11-21
+
+### Security & Hardening
+- **Snyk Code Path Traversal Remediation (`BEN-12`, `5 × python/PT`, `CWE-23`):** Added shared canonical XDG directory resolver `resolve_safe_xdg_dir()` in `src/bender/validators.py` enforcing absolute-path validation, `..` rejection, and `os.path.commonpath` containment under `$HOME` (or isolated test temp roots), and wired it into `setup_logging()` (`src/bender/main.py`) and `_settings_path()` (`src/bender/tab_weather.py`). Verified `0` open issues in `snyk code test` (`v1.1309.0`).
+- **Regression Tests:** Added `TestResolveSafeXdgDir` unit tests in `tests/test_validators.py`.
+
+---
+
 ## [0.1.15] - 2026-11-15
 
 ### Security & Hardening

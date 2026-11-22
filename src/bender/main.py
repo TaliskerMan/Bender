@@ -16,6 +16,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Adw, Gio, GLib, Gtk
+from .validators import resolve_safe_xdg_dir
 from .window import BenderWindow
 
 _CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
@@ -97,25 +98,41 @@ class BenderApp(Adw.Application):
 def setup_logging(state_root: Path | None = None) -> Path:
     """
     Configures application-wide logging with owner-only permissions (0700/0600),
-    5 MiB size rotation, and CR/LF control-character sanitization.
+    5 MiB size rotation, CR/LF control-character sanitization, and canonical
+    XDG path-traversal containment (BEN-12 / CWE-23).
     """
-    base_dir = state_root or Path(
-        os.environ.get("XDG_STATE_HOME") or (Path.home() / ".local" / "state")
-    )
-    log_dir = base_dir / "bender"
-    log_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    # Change Comment (2026-11-21, BEN-12 / Snyk python/PT CWE-23 / CP-ChangeComments):
+    # Canonicalize `XDG_STATE_HOME` / `state_root` and enforce `os.path.commonpath`
+    # containment before creating directories, opening `bender.log`, or calling `os.chmod`.
+    if state_root is not None:
+        allowed_base = os.path.realpath(os.fspath(state_root))
+        log_dir_real = os.path.realpath(os.path.join(allowed_base, "bender"))
+        if not log_dir_real.startswith(allowed_base + os.sep):
+            raise ValueError("Invalid logging state_root outside allowed directory")
+    else:
+        log_dir_real = os.fspath(
+            resolve_safe_xdg_dir("XDG_STATE_HOME", ".local/state", "bender")
+        )
+        allowed_base = os.path.dirname(log_dir_real)
+
+    os.makedirs(log_dir_real, mode=0o700, exist_ok=True)
     try:
-        os.chmod(log_dir, 0o700)
+        os.chmod(log_dir_real, 0o700)
     except OSError:
         pass
 
-    log_file = log_dir / "bender.log"
-    fd = os.open(log_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    log_file_real = os.path.realpath(os.path.join(log_dir_real, "bender.log"))
+    if not log_file_real.startswith(log_dir_real + os.sep):
+        raise ValueError("Resolved log file escaped Bender state directory")
+
+    fd = os.open(log_file_real, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
     os.close(fd)
     try:
-        os.chmod(log_file, 0o600)
+        os.chmod(log_file_real, 0o600)
     except OSError:
         pass
+
+    log_file = Path(log_file_real)
 
     file_handler = RotatingFileHandler(
         log_file,
