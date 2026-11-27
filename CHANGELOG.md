@@ -7,6 +7,14 @@ All notable changes to the Bender project are documented in this file. This proj
 
 ---
 
+## [0.1.17] - 2026-11-27
+
+### Released & Documented
+- **Official Linux Release (`v0.1.17`):** Packaged and GPG-signed official `.deb` distribution incorporating all `v0.1.15` SonarQube Cloud and `v0.1.16` Snyk Code (`BEN-12`) security and quality remediations.
+- **Documentation & Packaging Hygiene:** Updated `README.md`, `docs/guide/Bender_User_Guide.md`, and `docs/Bender_User_Guide.pdf` with `v0.1.17` verification commands and XDG diagnostic log documentation (`~/.local/state/bender/bender.log`), and excluded local scanner/linter caches from `bender_source.tar.gz`.
+
+---
+
 ## [0.1.16] - 2026-11-21
 
 ### Security & Hardening

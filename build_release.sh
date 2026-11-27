@@ -5,7 +5,7 @@ set -euo pipefail
 # Author: Chuck Talk, <chuck@nordheim.online>
 # Project: Bender
 # Purpose: Automated build, GPG sign, SHA-512/SHA-256 hash, and SBOM script.
-# Updated: 2026-11-15
+# Updated: 2026-11-27 (CP-ChangeComments: exclude local linter/scanner caches from source tarball)
 ###############################################################################
 # SINGLE SOURCE OF TRUTH: pyproject.toml `version` is the upstream version.
 # debian/changelog must carry the same upstream version with an optional `-N`
@@ -40,7 +40,7 @@ echo "${SEPARATOR}"
 
 # Ensure artifacts directory exists and clean old build artifacts safely
 mkdir -p "${BUILD_DIR}"
-find "${BUILD_DIR}" -mindepth 1 -maxdepth 1 ! -name '.keep' ! -name 'chuck_pubkey.asc' -exec rm -rf -- {} + 2>/dev/null || true
+find "${BUILD_DIR}" -mindepth 1 -maxdepth 1 ! -name '.keep' ! -name 'chuck_pubkey.asc' ! -name 'release_notes.md' -exec rm -rf -- {} + 2>/dev/null || true
 
 echo "==> Generating SBOM via Syft..."
 SYFT_BIN="syft"
@@ -86,7 +86,8 @@ mv -- ../"${PACKAGE_NAME}_${VERSION}"*.deb "${BUILD_DIR}/"
 mv -- ../"${PACKAGE_NAME}_${VERSION}"*.changes "${BUILD_DIR}/" 2>/dev/null || true
 mv -- ../"${PACKAGE_NAME}_${VERSION}"*.buildinfo "${BUILD_DIR}/" 2>/dev/null || true
 
-readonly DEB_FILE="${BUILD_DIR}/${PACKAGE_NAME}_${VERSION}_all.deb"
+readonly DEB_BASENAME="${PACKAGE_NAME}_${VERSION}_all.deb"
+readonly DEB_FILE="${BUILD_DIR}/${DEB_BASENAME}"
 
 # Generate detached GPG signatures per L-DEB-Packaging & L-Release
 echo "[2/4] Generating GPG detached signatures for .deb..."
@@ -97,10 +98,13 @@ gpg --batch --yes --pinentry-mode loopback --detach-sign --output "${DEB_FILE}.s
 gpg --batch --yes --armor --export "${GPG_EMAIL}" > "${BUILD_DIR}/pubkey.asc"
 cp "${BUILD_DIR}/pubkey.asc" "${BUILD_DIR}/chuck_pubkey.asc"
 
-# Generate SHA512 and SHA256 hashsums
+# Generate SHA512 and SHA256 hashsums using basename so sha512sum -c works in Downloads/NOBuilds
 echo "[3/4] Generating hashsums..."
-sha512sum -- "${DEB_FILE}" > "${DEB_FILE}.sha512"
-sha256sum -- "${DEB_FILE}" > "${DEB_FILE}.sha256"
+(
+    cd "${BUILD_DIR}"
+    sha512sum -- "${DEB_BASENAME}" > "${DEB_BASENAME}.sha512"
+    sha256sum -- "${DEB_BASENAME}" > "${DEB_BASENAME}.sha256"
+)
 gpg --batch --yes --clearsign --pinentry-mode loopback --default-key "${GPG_EMAIL}" "${DEB_FILE}.sha512"
 
 # Copy to NOBuilds directory
@@ -114,8 +118,9 @@ mkdir -p "${NOBUILDS_DIR}"
 echo "Generating source tarball..."
 tar --exclude=debian --exclude=.git --exclude=artifacts --exclude=__pycache__ \
     --exclude=build --exclude=.pybuild --exclude=./venv --exclude=./.venv \
-    --exclude=./bin --exclude='*.tar.gz' --exclude=.pytest_cache --exclude=.DS_Store \
-    --exclude=Audit --exclude=preso \
+    --exclude=./bin --exclude='*.tar.gz' --exclude=.pytest_cache --exclude=.ruff_cache \
+    --exclude=.scannerwork --exclude=.circleci --exclude=.sonarlint --exclude='**/node_modules' \
+    --exclude=.DS_Store --exclude=Audit --exclude=preso \
     -czf "${NOBUILDS_DIR}/bender_source.tar.gz" .
 cp "${NOBUILDS_DIR}/bender_source.tar.gz" "${BUILD_DIR}/"
 

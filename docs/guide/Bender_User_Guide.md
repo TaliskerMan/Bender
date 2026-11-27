@@ -1,6 +1,6 @@
 title: Bender
 subtitle: Installation and User Guide
-version: 0.1.16
+version: 0.1.17
 platforms: Linux (GNOME)
 ## About Bender
 
@@ -32,10 +32,10 @@ Panels whose tool is missing tell you so instead of failing silently.
 Each release includes `bender_<version>_all.deb`, a SHA-512 checksum, detached GPG signatures and the Nordheim Online public key (`chuck_pubkey.asc`).
 
 ```
-sha512sum -c bender_0.1.14_all.deb.sha512
+sha512sum -c bender_0.1.17_all.deb.sha512
 gpg --import chuck_pubkey.asc
-gpg --verify bender_0.1.14_all.deb.asc bender_0.1.14_all.deb
-sudo apt install ./bender_0.1.14_all.deb
+gpg --verify bender_0.1.17_all.deb.asc bender_0.1.17_all.deb
+sudo apt install ./bender_0.1.17_all.deb
 ```
 
 `apt` installs the required packages and offers the recommended ones. To get every feature at once:
@@ -175,6 +175,8 @@ Saving, Quick Add and Auto-Update ask for your password once, and restart Tinypr
 **The Port Checker shows a socket but no program name.** The program belongs to another user, usually a system service. The port is in use either way.
 
 **I clicked Reset GNOME App Grid and was logged out.** That's how the reset is applied. Log back in; your app grid is back to the default layout.
+
+**Where are Bender's diagnostic logs?** Bender writes local, sanitized diagnostic logs to `~/.local/state/bender/bender.log` (or `$XDG_STATE_HOME/bender/bender.log`, readable only by you and rotated at 5 MiB).
 
 ## Support and license
 

@@ -1,3 +1,10 @@
+# Plan for Bender Release v0.1.17: Official Linux Release & Documentation Audit (2026-11-27)
+- [x] Audit GitHub repository (`TaliskerMan/Bender`), `README.md`, `docs/guide/Bender_User_Guide.md`, and live `https://nordheim.online/bender/` documentation against codebase and `~/sarules/`.
+- [x] Auto-increment version to `0.1.17` across `pyproject.toml`, `src/bender/__init__.py`, `debian/changelog`, `sonar-project.properties`, `docs/guide/`, `CHANGELOG.md`, and `Audit/security_report.md` (`CP-AutoIncrement`).
+- [x] Run unit tests (`pytest`), Ruff, ShellCheck, Snyk Code & Open Source, Grype/Trivy/OSV-Scanner, and verify SonarQube Cloud (`TaliskerMan_Bender`) Quality Gate `OK`.
+- [x] Build 64-bit-compatible Debian package (`bender_0.1.17_all.deb`), CycloneDX SBOM (`Audit/`), GPG detached signatures, and SHA-512 checksums, and stage in `~/NOBuilds/Bender-11-27-2026-0.1.17/`.
+- [x] Commit, tag `v0.1.17`, push to `origin/main`, and publish official GitHub Release `v0.1.17`.
+
 # Plan for Bender Release v0.1.16: Snyk Code Path Traversal Remediation (`BEN-12`)
 - [x] Create branch `fix/BEN-12-snyk-path-traversal` from `origin/main` (`b77ff60`).
 - [x] Add `resolve_safe_xdg_dir()` in `src/bender/validators.py` enforcing canonical `os.path.commonpath` containment on `XDG_STATE_HOME` and `XDG_CONFIG_HOME` (`CWE-23`).

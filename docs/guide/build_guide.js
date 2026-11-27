@@ -2,7 +2,7 @@
  * Author: Chuck Talk, <chuck@nordheim.online>
  * Project: Bender
  * Purpose: Hardened user-guide PDF builder with canonical path containment and linear-time parsers.
- * Updated: 2026-11-15
+ * Updated: 2026-11-27 (CP-ChangeComments: bumped default fallback version to 0.1.17 for official release)
  */
 
 import fs from 'node:fs';
@@ -211,7 +211,7 @@ const { html: bodyHtml, tocHtml } = injectHeadingIdsAndBuildToc(withCallouts);
 
 const cleanTitle = stripHtmlTags(meta.title || 'Bender');
 const cleanSubtitle = stripHtmlTags(meta.subtitle || 'Installation and User Guide');
-const cleanVersion = stripHtmlTags(meta.version || '0.1.16');
+const cleanVersion = stripHtmlTags(meta.version || '0.1.17');
 const cleanPlatforms = stripHtmlTags(meta.platforms || 'Linux (GNOME)');
 
 const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -265,7 +265,11 @@ strong { color: var(--navy); }
 ${bodyHtml}
 </body></html>`;
 
-const browser = await chromium.launch();
+const SYSTEM_CHROME = '/usr/bin/google-chrome';
+const launchOptions = fs.existsSync(SYSTEM_CHROME)
+  ? { executablePath: SYSTEM_CHROME }
+  : {};
+const browser = await chromium.launch(launchOptions);
 try {
   const page = await browser.newPage();
   await page.setContent(documentHtml, { waitUntil: 'load' });

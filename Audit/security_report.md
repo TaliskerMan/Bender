@@ -1,8 +1,8 @@
 # Bender Security & Quality Scan Report
 
-**Application:** Bender v0.1.16  
-**Date:** November 21, 2026  
-**Tools:** Snyk CLI (`v1.1309.0`), SonarQube Cloud (`TaliskerMan_Bender`), Syft, Grype, Trivy, ShellCheck, Pytest  
+**Application:** Bender v0.1.17  
+**Date:** November 27, 2026  
+**Tools:** Snyk CLI (`v1.1309.0`), SonarQube Cloud (`TaliskerMan_Bender`), Syft, Grype, Trivy, OSV-Scanner, ShellCheck, Ruff, Pytest  
 **Auditor:** Antigravity AI / ShadowAgent Shift-Left Compliance Engine  
 **Repository:** `TaliskerMan/Bender`  
 **Target Platform:** Linux (`amd64` / `all` architecture DEB)
@@ -11,13 +11,13 @@
 
 ## Executive Summary
 
-A comprehensive multi-scanner security audit and quality gate check was conducted for **Bender v0.1.16** per the Nordheim Online development standards (`~/sarules`).
+A comprehensive multi-scanner security audit and quality gate check was conducted for **Bender v0.1.17** per the Nordheim Online development standards (`~/sarules`).
 
 | Gate / Audit Layer | Tool | Result | Details |
 |---|---|---|---|
 | **Snyk Code (SAST) & Open Source** | `snyk` (`v1.1309.0`, `taliskerman`) | ✅ PASS | `0` Snyk Code issues (`BEN-12` `5 × python/PT` `CWE-23` remediated), `0` Open Source vulnerabilities |
-| **SonarQube Cloud Quality Gate** | `TaliskerMan_Bender` | ✅ PASS | `PASSED` (`0` Bugs, `0` Vulnerabilities, `0` Security Hotspots, `0` Code Smells; down from 17 issues) |
-| **Unit & AST Invariant Tests** | `pytest` | ✅ PASS | `39 / 39` tests passed (validators, XDG traversal containment, AST `run_shell` invariants, cleanup, logging sanitization, UI logic) |
+| **SonarQube Cloud Quality Gate** | `TaliskerMan_Bender` | ✅ PASS | `PASSED` (`0` Bugs, `0` Vulnerabilities, `0` Security Hotspots, `0` Code Smells; `A/A/A/A` ratings) |
+| **Unit & AST Invariant Tests** | `pytest` + `ruff` | ✅ PASS | `42 / 42` tests passed (validators, XDG traversal & symlink guards, AST `run_shell` invariants, cleanup, logging sanitization, UI logic); `0` Ruff errors |
 | **Shell Static Analysis** | `shellcheck` | ✅ PASS | `0` warnings across `build_release.sh` and `run.sh` |
 | **Secret Detection** | `sonar analyze secrets` + `trivy` | ✅ PASS | `0` hardcoded secrets detected |
 | **SBOM & Supply Chain** | `syft` + `grype` | ✅ PASS | Path-sanitized CycloneDX JSON SBOM (`Audit/SBOM-Linux.json`); `0` host paths, `0` vulnerabilities |

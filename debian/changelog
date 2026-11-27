@@ -1,3 +1,13 @@
+bender (0.1.17) unstable; urgency=medium
+
+  * Official v0.1.17 Linux release rolling up SonarQube Cloud (v0.1.15) and
+    Snyk Code BEN-12 XDG containment (v0.1.16) security remediations.
+  * Synchronized README.md, Bender_User_Guide.md, and Bender_User_Guide.pdf
+    install/logging documentation and excluded local scanner/linter caches
+    from release source tarball.
+
+ -- Chuck Talk <chuck@nordheim.online>  Fri, 27 Nov 2026 14:42:00 -0600
+
 bender (0.1.16) unstable; urgency=medium
 
   * Remediated all 5 Snyk Code Path Traversal (python/PT, CWE-23) findings

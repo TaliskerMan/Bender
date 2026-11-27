@@ -26,9 +26,9 @@ Bender has eight tabs:
 - **Clean Rotated Logs** permanently deletes the compressed old logs (`*.gz`) under `/var/log`.
 - **Reset GNOME App Grid** logs you out to apply the reset.
 
-### Privacy
+### Privacy & Local Logs
 
-Bender has no telemetry or account. It uses the network only when you ask it to: DNS and whois lookups, updates, the Steven Black list download, and the weather. The weather location you type is sent to OpenWeatherMap through `ansiweather`, and Bender remembers the last location in `~/.config/bender/weather.json`, readable only by you.
+Bender has no telemetry or account. It uses the network only when you ask it to: DNS and whois lookups, updates, the Steven Black list download, and the weather. The weather location you type is sent to OpenWeatherMap through `ansiweather`, and Bender remembers the last location in `~/.config/bender/weather.json` (or `$XDG_CONFIG_HOME/bender/weather.json`), readable only by you (`0600`). Local diagnostic logs are written to `~/.local/state/bender/bender.log` (or `$XDG_STATE_HOME/bender/bender.log`, mode `0600`, rotated at 5 MiB).
 
 ### Proxy blocklist: two things to know
 
@@ -90,4 +90,4 @@ The full installation and user guide is [docs/Bender_User_Guide.pdf](docs/Bender
 
 ## Author
 
-Chuck Talk — [GitHub](https://github.com/TaliskerMan) · GPLv3
+Chuck Talk (`chuck@nordheim.online`) — [Nordheim Online](https://nordheim.online) · [GitHub](https://github.com/TaliskerMan/Bender) · GPLv3
